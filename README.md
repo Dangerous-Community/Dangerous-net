@@ -1,5 +1,5 @@
 # IPFSS_IPFS-Secure
-A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymetric RSA keypair. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS  
+A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymmetric RSA keypair. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS  
 
 
 ## Planning and Roadmap 
