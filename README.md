@@ -65,11 +65,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Roadmap Plan of Development 
 
-- Completion of initial encryption and sys arg functions / data flow
-- GPG function addition for signature verification (Double Content verification) (Prevent IPFS CID phishing attack) 
-- IPFS Kubo Implementation
-- IPFS API Implementation
-
+- Completion of initial encryption and sys arg functions / data flow to ipfs get and ipfs add.
+- Usage of JAVA Keycard for signing / backing up private public keys.  
 
 ## Function Layout
 Key Management Functions
