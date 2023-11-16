@@ -5,7 +5,7 @@ import (
     "os"
 
     "IPFSS_IPFS-Secure/src/libb/keycard_link"
-    "IPFSS_IPFS-Secure/libb/ipfs_link"
+    "IPFSS_IPFS-Secure/slibb/ipfs_link"
 )
 
 func main() {
