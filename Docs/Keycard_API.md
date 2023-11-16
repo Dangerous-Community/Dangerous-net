@@ -29,6 +29,25 @@ Understanding Keycard Capabilities:
 >So the smart card only "accelerates" the private key operation. I put that between quotes as in general a mainstream CPU will be much faster than the speed of the cryptographic co-processor and the communication overhead provided by the card. The AES operations are performed off-card, and they bear the brunt of the work for any files above, say, a few KiB.
 
 
+## Note from Satunix. Data flow of symmetrically encrypting and decrypting data using JAVA Keycard
+
+1. Encryption: 
+- User enters passphrase 
+- Sign passphrase with keycard 
+- Unique key is generated
+- Key used as string data and input into gpg
+- Remove any pointers, process logs, or files required for the data flow to prevent lifting or malware extraction. 
+- gpg encrypts the data using that unique string
+- encrypted file.gpg is passed off to IPFS.
+
+2. Decryption:
+- IPFS retrieves file via CID
+- Enter passphrase prompt, user enters passphrase
+- Sign passphrase with keycard
+- Unique key is generated
+- Key used as string to decrypt the file
+- Remove any pointers, process logs, or files with sensitive information.
+- encrypted <file.gpg> becomes <file>
 
 ## Keycard Implementation for Encryption and Decryption
 
