@@ -1,117 +1,120 @@
-# Keycard implementation 
+# Keycard Implementation
 
-## Notes
+## Introduction
 
-Understanding Keycard Capabilities:
-1. Key Storage:
-- Keycard is designed to securely store private keys, typically used for digital signatures and authenticating transactions, especially in blockchain contexts.
+This document outlines the process of integrating Keycard into a Java-based application for symmetrically encrypting and decrypting data, particularly focusing on file-based applications with IPFS (InterPlanetary File System) storage.
 
-3. Signing Operations:
-- Keycard can sign data using the stored private keys. This is commonly used for signing transactions in cryptocurrency applications. Instead we are using a file based application where instead of blocks of cryptocurrency being signed it is blocks of IPFS storage. 
-- The idea would be akin to keeping private public keys for Ethereum / ERC-20. Something which is well proven and battle tested for keycard through Status.
-- Instead we just decrypt the data using the private keycard key. ***Though this will be different to the core of the IPFSS program as the private key is not revealed to the interface itself.*** 
+## Developers: Criteria for Commits
 
-5. Encryption/Decryption:
-- Standard file encryption/decryption is not a primary function of Keycard. It's more oriented towards signing and transaction authentication.
-- Though this signing and transaction authentication can be expanded upon. Since cryptocurrency transactions are just private key signings this shouldnt be too hard to implement. 
+Contributors should follow these guidelines to ensure consistency and security in the codebase.
 
-## From Stack Overflow about something similar:
+### Encryption Process:
 
+#### User Passphrase Input:
+- Ensure secure input handling.
+- Use secure GUI prompts or console inputs that don't echo the passphrase.
 
-> If it is available, how does it work. Will the Smart Card take a stream of encrypted bytes and then spit out a stream of unencrypted bytes?
-> 
->No, that's generally not what happens. In general smart card simply supply an RSA operation that performs raw RSA, RSA PKCS#1 or RSA OAEP decryption. The result of this operation is a relatively small amount of bytes; e.g. in the case of RSA PKCS#1 about 11 bytes less then the key size (which is the size of the modulus for RSA). If a raw RSA operation is provided then the unpadding should be performed by the off card entity.
->
->So what is used is a hybrid cryptosystem. Such a system uses a random, symmetric data key to encrypt the plaintext. This random data key - usually an AES key - is then encrypted by the RSA public key. The encrypted data key is stored together with the ciphertext using a container format such as CMS or Open PGP.
->
->Upon decryption the AES data key is first decrypted with the private key on the smart card. This for instance requires a PIN code to be entered to gain access to the private key. Once the data key is decrypted it can be used to decrypt the rest of the data. Using authenticated encryption (such as GCM) should of course be preferred.
->
->So the smart card only "accelerates" the private key operation. I put that between quotes as in general a mainstream CPU will be much faster than the speed of the cryptographic co-processor and the communication overhead provided by the card. The AES operations are performed off-card, and they bear the brunt of the work for any files above, say, a few KiB.
+#### Signing Passphrase with Keycard:
+- Keycards typically sign a hash of data rather than the passphrase directly.
+- Use the Keycard to securely generate or sign a hash of the passphrase for encryption.
 
+#### Key Generation and Management:
+- Generate a symmetric key based on the signed data, ensuring cryptographic security.
+- Securely handle the key in memory and clear it immediately after use.
 
-## HOW TO! Note from Satunix. 
-## Data flow of symmetrically encrypting and decrypting data using JAVA Keycard
+#### Integration with GPG:
+- Pass the symmetric key to GPG securely for encryption.
+- Avoid using command-line arguments for key passing.
 
-1. Encryption: 
-- User enters passphrase 
-- Sign passphrase with keycard 
-- Unique key is generated
-- Key used as string data and input into gpg
-- Remove any pointers, process logs, or files required for the data flow to prevent lifting or malware extraction. 
-- gpg encrypts the data using that unique string
-- encrypted file.gpg is passed off to IPFS.
+#### Security Measures:
+- Implement measures to prevent memory dumping.
+- Ensure secure deletion of temporary files or logs containing sensitive data.
+- Use secure file handling libraries in Java.
 
-2. Decryption:
-- IPFS retrieves file via CID
-- Enter passphrase prompt, user enters passphrase
-- Sign passphrase with keycard
-- Unique key is generated
-- Key used as string to decrypt the file
-- Remove any pointers, process logs, or files with sensitive information.
-- encrypted <file.gpg> becomes <file>
+#### Uploading to IPFS:
+- Maintain the integrity and confidentiality of data during the IPFS upload process.
+- Securely handle IPFS interactions and manage CIDs appropriately.
 
-## Keycard Implementation for Encryption and Decryption
+### Decryption Process:
 
-### Utilize Keycard for Signing:
+#### Retrieve File from IPFS:
+- Ensure secure retrieval of the encrypted file from IPFS using the CID.
 
-- The Keycard will be used for signing data blocks, similar to how it signs cryptocurrency transactions.
-- For file-based applications, each block of data (or the entire file) can be signed using the Keycard's private key.
+#### Passphrase Handling:
+- Manage passphrase input securely, similar to the encryption process.
 
-### Generating and Storing Keys:
+#### Keycard Interaction:
+- Use the Keycard to generate or retrieve the decryption key securely.
 
-- Use commands like `GENERATE KEY` or `LOAD KEY` to create or load RSA keys onto the Keycard.
-- The generated keys can be used for signing operations. Ensure these keys are securely stored and managed on the Keycard.
+#### Decrypting with GPG:
+- Decrypt the file using GPG with the symmetric key derived from the Keycard-signed data.
+- Ensure secure handling of key material during decryption.
 
-### File Encryption and Decryption:
+#### Post-Decryption Security:
+- Manage decrypted data securely.
+- Clean up any sensitive remnants in memory or temporary storage.
+
+#### Error Handling and Logging:
+- Implement robust error handling for Keycard interactions, GPG operations, and IPFS retrieval.
+- Avoid storing sensitive information in logs.
+
+### General Considerations:
+
+#### Cryptographic Best Practices:
+- Adhere to best practices for key generation, data signing, and symmetric encryption.
+
+#### Code Security:
+- Ensure the Java code handling cryptographic operations is secure against common vulnerabilities.
+
+#### User Feedback:
+- Provide clear and user-friendly feedback for operations, especially for errors or successful operations.
+
+#### Documentation and Testing:
+- Document the process clearly, including prerequisites and configurations.
+- Thoroughly test the application for reliability and security.
+
+## Understanding Keycard Capabilities
+
+### Key Storage:
+- Keycard is designed for secure storage of private keys, commonly used in digital signatures and transaction authentication.
+
+### Signing Operations:
+- Keycard can sign data blocks using stored private keys, adaptable for file-based applications and IPFS storage.
+
+### Encryption/Decryption:
+- While not a primary function, Keycard's signing capabilities can be adapted for encryption/decryption processes in file-based applications.
+
+## Implementation Notes
+
+### Data Flow for Encryption and Decryption Using Java Keycard
 
 #### Encryption:
-- Encrypt files using standard encryption tools, like OpenSSL or GPG, with a public key. This public key can be the one associated with the Keycard's private key, or another keypair depending on your security design.
+- User enters a passphrase.
+- Sign the passphrase with the Keycard.
+- Generate a unique key based on the signed passphrase.
+- Use the key as string data for GPG encryption.
+- Remove sensitive process logs or files to prevent data exposure.
+- Encrypt the data with GPG and pass the encrypted file to IPFS.
 
 #### Decryption:
-- Decryption is typically performed using the corresponding private key. However, as Keycard does not directly expose private keys for security reasons, it cannot directly decrypt data in the conventional sense. Instead, consider using Keycard for validating the signature of the encrypted data to ensure its integrity and authenticity.
-- Alternative Approach: If direct decryption with Keycard's private key is necessary, you may need to explore if `EXPORT KEY` can be used securely, though this might pose a security risk as exporting private keys is generally discouraged.
+- Retrieve the file from IPFS using its CID.
+- User re-enters the passphrase.
+- Sign the passphrase with the Keycard to regenerate the decryption key.
+- Use the key to decrypt the file with GPG.
+- Ensure removal of sensitive logs or temporary files.
 
-### Signing Encrypted Files:
+## Further Reading for Developers
 
-- After encrypting a file, use the `SIGN` command to sign the encrypted file with the Keycard's private key.
-- This signature can be used to verify the file's integrity and authenticity upon decryption.
+### Recommended Resources:
 
-### Verifying Signatures:
+- [Official Go API for Keycard](https://github.com/status-im/keycard-go/)
+- [Keycard CLI](https://github.com/status-im/keycard-cli)
+- [Keycard APDU API](https://keycard.tech/docs/apdu/)
+- [Localhost Web3 Application for Keycard](https://keycard.tech/docs/web3.html)
 
-- When a file is decrypted using a standard decryption tool, use Keycard’s public key to verify the signature. This ensures that the file was indeed encrypted and signed by the owner of the Keycard.
+Contributors are encouraged to explore these resources for a deeper understanding of Keycard's capabilities and integration methods.
 
-### Workflow Integration:
+## Conclusion
 
-- Implement a workflow in your application where every file to be uploaded to IPFS is first encrypted, then signed using the Keycard.
-- For downloading, after retrieving the file from IPFS, the application should first verify the signature using Keycard's public key, then decrypt it using the corresponding private key (not stored on Keycard).
-
-### Security Protocols:
-
-- Ensure all interactions with Keycard, like PIN verification (`VERIFY PIN`), opening secure channels (`OPEN SECURE CHANNEL`), and mutual authentication (`MUTUALLY AUTHENTICATE`), are handled securely in your application.
-
-### Conclusion
-
-While Keycard provides robust capabilities for signing and key management, its direct use in standard file encryption/decryption workflows is limited due to its design as a secure element for transaction signing and authentication. Your implementation can leverage Keycard for signing encrypted files, adding a layer of security by ensuring data integrity and origin verification. However, for conventional encryption and decryption of files, reliance on external tools and methodologies that complement Keycard's capabilities would be necessary.
-
-
-
-
-## Further Reading for Developers 
-
-Most promising and recomended: **The Official Go API**
-
-- [Keycard for Go applications](https://github.com/status-im/keycard-go/)
-
-Might be the easiest to implement, just have to make sure your can encrypt and decrypt files using the keycard CLI. 
-
-- [Keycard for CLI (can pass sysargs with Go to keycard CLI)](https://github.com/status-im/keycard-cli)
-
-Could use APDU, whatever tf that means. 
-
-- [ Keycard APDU API ](https://keycard.tech/docs/apdu/)https://keycard.tech/docs/apdu/
-
-Or we could use the WEB3 Application and push it through a localhost web UI (One of my favs for the future)
-
-- [Localhost web3 application](https://keycard.tech/docs/web3.html)https://keycard.tech/docs/web3.html
-
+By leveraging Keycard's unique capabilities for signing and transaction authentication, developers can create a secure and efficient system for encrypting and decrypting data, particularly for applications involving IPFS storage.
 
