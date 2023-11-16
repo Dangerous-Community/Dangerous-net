@@ -34,20 +34,25 @@ Before you begin, ensure you have the following installed on your system:
    ```
 3. Use this instead for IPFS add and get for tunneled transfer.
 
-   
+
 ## Usage
 
-1. **Running the Application**:
-   ```bash
-   ./SecureIPFS [command] [options]
-   ```
+- **Encrypting and Uploading a File**:
+  Encrypt your files with a public key and upload them to IPFS, receiving an IPFS hash in return.
+  ```bash
+  ./SecureIPFS upload --file path/to/file --pubkey path/to/pubkey
+  ```
 
-   Replace `[command]` and `[options]` with the appropriate options for uploading or downloading files.
+- **Downloading and Decrypting a File**:
+  Download and decrypt files from IPFS using your private key.
+  ```bash
+  ./SecureIPFS download --hash "ipfs_hash" --privkey path/to/privkey --passphrase "your_passphrase"
+  ```
 
 ## Contributing
 
-Contributions to SecureIPFS are welcome! Please read our contributing guidelines for details on how to submit pull requests.
-
+Contributions to SecureIPFS are welcome! Please read our upcoming contributing guidelines for details on how to submit pull requests.
+For now just create a fork and then create a pull request with your changes.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -64,7 +69,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - GPG function addition for signature verification (Double Content verification) (Prevent IPFS CID phishing attack) 
 - IPFS Kubo Implementation
 - IPFS API Implementation
-
 
 
 ## Function Layout
