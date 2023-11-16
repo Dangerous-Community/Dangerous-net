@@ -19,13 +19,13 @@ Understanding Keycard Capabilities:
 
 
 > If it is available, how does it work. Will the Smart Card take a stream of encrypted bytes and then spit out a stream of unencrypted bytes?
-
+> 
 >No, that's generally not what happens. In general smart card simply supply an RSA operation that performs raw RSA, RSA PKCS#1 or RSA OAEP decryption. The result of this operation is a relatively small amount of bytes; e.g. in the case of RSA PKCS#1 about 11 bytes less then the key size (which is the size of the modulus for RSA). If a raw RSA operation is provided then the unpadding should be performed by the off card entity.
-
+>
 >So what is used is a hybrid cryptosystem. Such a system uses a random, symmetric data key to encrypt the plaintext. This random data key - usually an AES key - is then encrypted by the RSA public key. The encrypted data key is stored together with the ciphertext using a container format such as CMS or Open PGP.
-
+>
 >Upon decryption the AES data key is first decrypted with the private key on the smart card. This for instance requires a PIN code to be entered to gain access to the private key. Once the data key is decrypted it can be used to decrypt the rest of the data. Using authenticated encryption (such as GCM) should of course be preferred.
-
+>
 >So the smart card only "accelerates" the private key operation. I put that between quotes as in general a mainstream CPU will be much faster than the speed of the cryptographic co-processor and the communication overhead provided by the card. The AES operations are performed off-card, and they bear the brunt of the work for any files above, say, a few KiB.
 
 
