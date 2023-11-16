@@ -4,8 +4,8 @@ import (
     "fmt"
     "os"
 
-    "yourproject/src/libb/keycard_link"
-    "yourproject/src/libb/ipfs_link"
+    "IPFSS_IPFS-Secure/src/libb/keycard_link"
+    "IPFSS_IPFS-Secure/libb/ipfs_link"
 )
 
 func main() {
