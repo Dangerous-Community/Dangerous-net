@@ -8,9 +8,9 @@ SecureIPFS is an application and library set that integrates the InterPlanetary 
 
 ## Key Features
 
-- **Encryption**: Secure your files before adding them to IPFS.
-- **Decentralized Storage**: Utilize IPFS for decentralized file storage.
-- **Go Implementation**: Built with Go, leveraging its powerful concurrency features and efficient data handling.
+- **Asymmetric Encryption**: Utilize RSA encryption to secure your files. Files are encrypted with a public key and can only be decrypted with the corresponding passphrase protected private key.
+- **Decentralized Storage**: Leverage IPFS for secure, decentralized file storage.
+- **Go Implementation**: Built with Go, taking advantage of its powerful concurrency features and efficient data handling.
 
 ## Prerequisites
 
@@ -57,6 +57,14 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - IPFS Team for the IPFS protocol
 - Go community for the extensive libraries and support
 - All contributors who participate in this project
+
+## Roadmap Plan of Development 
+
+- Completion of initial encryption and sys arg functions / data flow
+- GPG function addition for signature verification (Double Content verification) (Prevent IPFS CID phishing attack) 
+- IPFS Kubo Implementation
+- IPFS API Implementation
+
 
 
 ## Function Layout
