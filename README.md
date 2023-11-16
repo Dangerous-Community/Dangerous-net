@@ -1,11 +1,65 @@
 # IPFSS_IPFS-Secure
-A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymmetric RSA keypair. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS  
+A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymmetric RSA keypair. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS.
 
 
-## Planning and Roadmap 
+# SecureIPFS
+
+SecureIPFS is an application and library set that integrates the InterPlanetary File System (IPFS) with robust RSA encryption in Go, providing a secure method to store and retrieve files. It encrypts files before uploading to IPFS and decrypts them using a corresponding key pair.
+
+## Key Features
+
+- **Encryption**: Secure your files before adding them to IPFS.
+- **Decentralized Storage**: Utilize IPFS for decentralized file storage.
+- **Go Implementation**: Built with Go, leveraging its powerful concurrency features and efficient data handling.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+- Go programming language
+- IPFS daemon running locally or accessible remotely
+- Relevant Go libraries for IPFS and encryption
+
+## Installation
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/yourusername/SecureIPFS.git
+   cd SecureIPFS
+   ```
+
+2. **Build the Application**:
+   ```bash
+   go build
+   ```
+3. Use this instead for IPFS add and get for tunneled transfer.
+
+   
+## Usage
+
+1. **Running the Application**:
+   ```bash
+   ./SecureIPFS [command] [options]
+   ```
+
+   Replace `[command]` and `[options]` with the appropriate options for uploading or downloading files.
+
+## Contributing
+
+Contributions to SecureIPFS are welcome! Please read our contributing guidelines for details on how to submit pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- IPFS Team for the IPFS protocol
+- Go community for the extensive libraries and support
+- All contributors who participate in this project
 
 
-Function Layout
+## Function Layout
 Key Management Functions
 
 generate_keypair(passphrase): Generates a new RSA key pair (public and private keys) secured by the given passphrase. Stores the key pair securely.
