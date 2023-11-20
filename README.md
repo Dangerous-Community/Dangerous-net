@@ -2,7 +2,7 @@
 
 A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymmetric RSA keypair and GPG. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS.
 
-**Recommended to use keycard, Apex, or Keycard for Multi Factor Authentication (MFA), encrypting and decrypting data. Using IPFS in general.**
+**Recommended to use PGPCard, Apex, or yubikey for Multi Factor Authentication (MFA), encrypting and decrypting data. Using IPFS in general.**
 
 
 SecureIPFS is an application and library set that integrates the InterPlanetary File System (IPFS) with robust RSA encryption in Go, providing a secure method to store and retrieve files. It encrypts files before uploading to IPFS and decrypts them using a corresponding key pair.
@@ -13,29 +13,24 @@ SecureIPFS is an application and library set that integrates the InterPlanetary 
    - I can do this but some help would be appreciated.
    - Just need to add IPFS Kubo implementation - this is just a front end for IPFS Get and IPFS Add.
 
-2. **Keycard Implementation.**
+2. **Apex /Flex Implementation.**
    - This is stage two and if you are a developer wanting to help, make a fork, see /Docs/* and add your software, finish / upload with a pull request.
-   - Ive therorised a way to securely use the keycard for encrypting and decrypting data. Since a EDCSA Signature is unique to the signers private key and the data they are signing. This is all we need.
-   - You just reverse the process, the file is not being signed, the users unique passphrase is. This way the unique EDCSA signature is unique to the user and the application,
-   - This way an attacker cannot decrypt the IPFS data without the keycard, and they cant just scan the keycard, the need to know the passphrase used for that file, and swipe or otherwise steal the keycard.
-   - This is a way of using in vivo crypto coprocessors for secure MFA and file privacy / security.
+   - This integration has been restructured from using keycard due to a rather unorthodox workaround. Instead the project will now focus on using both Keycard and the PGP applet. 
 
 
 ## From Dangerous Things with love. 
 
-The Apex Flex and FlexSecure allow us mortal humans to perform cryptographic functions in vivo (under the skin) this fact paired with the above cryptographic MFA, provides the user a secure way to keep their data safe. 
+The Apex Flex and FlexSecure allow us mortal humans to perform cryptographic functions in vivo (under the skin) this fact paired with the above cryptographic MFA (Coupling the GPG key from your card into IPFS), the program provides the user a secure way to keep their data safe. 
 
 ![image](https://github.com/SATUNIX/IPFSS_IPFS-Secure/assets/111553838/c28a0a23-1c19-4e04-b621-ef7b76d92f77)
 
-You may be asking **"but satunix why is this so special?" "These implants can do PGP and OTP!!!"** Well, they sure can, but thats it, good luck loading several applets onto your keycard for each purpose, then trying to navigate and use all of the different block positions keys, algorithims.... and whatever tf. Me personally, I kave a FlexSecure loaded with Keycard. Thus, Keycard must be used for this process. This allows even the noobiest of users ease of control and access. 
-*A load and swipe process.*
 
 >"The ability to carry your OTP authenticator, PGP, and other cryptographic keys, and perform cryptographic functions all in vivo (generate OTP codes, encrypt & decrypt data, etc.) without ever revealing private keys to the NFC interface you are interacting with is a huge step forward for personal digital identity and data security."
    
 ## Key Features
 
 - **Asymmetric Encryption**: Utilize RSA encryption to secure your files. Files are encrypted with a public key and can only be decrypted with the corresponding passphrase protected private key.
-- **Symmetric Encryption**: Utilize a Apex or FlexSecure implant with keycard to use Multi Factor Symmetric encryption on your files, supply a passphrase, scan your card, files secured. 
+- **Symmetric Encryption**: Utilize a Apex or FlexSecure implant with to use the Multi Factor Symmetric encryption on your files, supply a passphrase for the key, scan your card, files secured. 
 - **Decentralized Storage**: Leverage IPFS for secure, encrypted, decentralized, and immutable file storage.
 - **Go Implementation**: Built with Go, taking advantage of its powerful concurrency features and efficient data handling.
 
