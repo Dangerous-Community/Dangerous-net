@@ -155,10 +155,51 @@ func encryptFile(filename string) error {
     if err != nil {
         return fmt.Errorf("error encrypting file: %w", err)
     }
-
     fmt.Printf("File encrypted successfully: %s.gpg\n", filename)
+
+    // Use askUserYN to ask if the user wants to upload to IPFS
+    if askUserYN("Do you want to upload the encrypted file to IPFS?") {
+        // Call ipfsUpload function with the encrypted file
+        if err := ipfsUpload(filename + ".gpg"); err != nil {
+            return fmt.Errorf("error uploading file to IPFS: %w", err)
+        }
+    }
+
     return nil
 }
+
+func saveCID(cid string) error {
+    // Write CID to log_CID.log
+    f, err := os.OpenFile("log_CID.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        return err
+    }
+    defer f.Close()
+
+    if _, err := f.WriteString(cid + "\n"); err != nil {
+        return err
+    }
+
+    return nil
+}
+
+
+func ipfsUpload(filePath string) error {
+    // Call AddFileToIPFS function
+    cid, err := ipfs_link.AddFileToIPFS(filePath)
+    if err != nil {
+        return err
+    }
+
+    // Call saveCID function with the returned CID
+    if err := saveCID(cid); err != nil {
+        return fmt.Errorf("error saving CID: %w", err)
+    }
+
+    fmt.Println("File uploaded to IPFS successfully, CID:", cid)
+    return nil
+}
+
 
 func decryptFile(filename string) error {
     // Ask user for CID
@@ -167,10 +208,10 @@ func decryptFile(filename string) error {
         return fmt.Errorf("error reading CID: %w", err)
     }
 
-    outputPath := "./" // Set the output path, adjust if necessary
+    ipfsFilePath := "retrieved_" + filename // Save the file retrieved from IPFS with a prefixed name
 
-    // Retrieve the file from IPFS using ipfs_link library
-    err = ipfs_link.GetFileFromIPFS(cid, outputPath)
+    // Retrieve the file from IPFS
+    err = ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
     if err != nil {
         return fmt.Errorf("error retrieving file from IPFS: %w", err)
     }
@@ -186,15 +227,14 @@ func decryptFile(filename string) error {
     if err != nil {
         return fmt.Errorf("error reading passphrase: %w", err)
     }
-
     // Generate the symmetric key
     seedKDF := publicKey + passphrase
     kdfKey := sha256.Sum256([]byte(seedKDF))
     decryptedKey := fmt.Sprintf("%x", kdfKey)
 
-    // Decrypt the file using GPG and the derived key
-    decryptedFilePath := outputPath // Adjust as needed
-    cmd := exec.Command("gpg", "--decrypt", "--batch", "--passphrase", decryptedKey, "--output", decryptedFilePath, outputPath)
+    // Decrypt the file using GPG
+    decryptedFilePath := "decrypted_" + filename // This is the path where the decrypted file will be saved
+    cmd := exec.Command("gpg", "--decrypt", "--batch", "--passphrase", decryptedKey, "--output", decryptedFilePath, ipfsFilePath)
     cmd.Stdout = os.Stdout
     cmd.Stderr = os.Stderr
     err = cmd.Run()
@@ -205,7 +245,4 @@ func decryptFile(filename string) error {
     fmt.Printf("File decrypted successfully: %s\n", decryptedFilePath)
     return nil
 }
-
-
-
 

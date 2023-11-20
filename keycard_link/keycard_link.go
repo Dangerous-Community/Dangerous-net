@@ -12,6 +12,7 @@ import (
 // GetKeycardPublicKey retrieves the public key from the keycard.
 func GetKeycardPublicKey() (string, error) {
     // Command to execute
+    fmt.Print("Scan your card now! :) \n")
     cmd := exec.Command("./keycard-linux-amd64", "info")
 
     // Capture the output of the command
@@ -46,7 +47,7 @@ func GetKeycardPublicKey() (string, error) {
 
 // ReadPassphrase prompts the user to enter a passphrase.
 func ReadPassphrase() (string, error) {
-    fmt.Print("Enter a unique passphrase for this file upload: ")
+    fmt.Print("Enter a unique passphrase for this particular file: ")
     reader := bufio.NewReader(os.Stdin)
     passphrase, err := reader.ReadString('\n')
     if err != nil {
