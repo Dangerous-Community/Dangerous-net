@@ -51,8 +51,8 @@ Before you begin, ensure you have the following installed on your system:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/yourusername/SecureIPFS.git
-   cd SecureIPFS
+   git clone https://github.com/ ETC ETC ETC
+   cd IPFSS_IPFS-Secure/
    ```
 
 2. **Build the Application**:
@@ -64,16 +64,10 @@ Before you begin, ensure you have the following installed on your system:
 
 ## Usage
 
-- **Encrypting and Uploading a File**:
-  Encrypt your files with a public key and upload them to IPFS, receiving an IPFS hash in return.
-  ```bash
-  ./SecureIPFS upload --file path/to/file --pubkey path/to/pubkey
-  ```
+- **Run the program, all items in the menu:**
 
-- **Downloading and Decrypting a File**:
-  Download and decrypt files from IPFS using your private key.
   ```bash
-  ./SecureIPFS download --hash "ipfs_hash" --privkey path/to/privkey --passphrase "your_passphrase"
+  ./IPFSS_IPFS-Secure 
   ```
 
 ## Contributing
