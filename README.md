@@ -36,8 +36,9 @@ You may be asking **"but satunix why is this so special?" "These implants can do
    
 ## Key Features
 
-- **Asymmetric Encryption**: Utilize RSA encryption to secure your files. Files are encrypted with a public key and can only be decrypted with the corresponding passphrase protected private key.
-- **Symmetric Encryption**: Utilize a Apex or FlexSecure implant with keycard to use Multi Factor Symmetric encryption on your files, supply a passphrase, scan your card, files secured. 
+- **Symmetric Encryption**: Utilize RSA encryption to secure your files. Files are encrypted with a generated key, given the unique data from your P71 chip and a passphrase.
+- **Symmetric Encryption 2**: Utilize a Apex or FlexSecure implant with keycard to use Multi Factor Symmetric encryption on your files, supply a passphrase, scan your card, files secured.
+- **Asymmetric Encryption**: Encrypt your files however you want using GPG, I will later be expanding the encryption process into it's own link API, allowing greater flexibility on how your files are encrypted.
 - **Decentralized Storage**: Leverage IPFS for secure, encrypted, decentralized, and immutable file storage.
 - **Go Implementation**: Built with Go, taking advantage of its powerful concurrency features and efficient data handling.
 
