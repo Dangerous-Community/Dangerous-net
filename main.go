@@ -169,11 +169,13 @@ func encryptFile(filename string) error {
     fmt.Print("Generating the seed for KDF ... ")
 
     seedKDF := publicKey + passphrase
-    fmt.Println("SeedKDF:", seedKDF)
-    fmt.Print("Generating the symmetric key... \n")
 
     // Derive a key using a KDF (e.g., SHA-256)
     kdfKey := sha256.Sum256([]byte(seedKDF))
+
+    fmt.Println("Seed KDF: ",kfdKey)
+    fmt.Print("Generating the symmetric key... \n")
+
     encryptedKey := fmt.Sprintf("%x", kdfKey)
     art_link.PrintFileSlowly("encrypting.txt")
 
