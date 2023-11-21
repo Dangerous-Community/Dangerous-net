@@ -10,6 +10,7 @@ import (
     "crypto/sha256"
     "strings"
     "IPFSS_IPFS-Secure/keycard_link"
+    "IPFSS_IPFS-Secure/art_link"
     "IPFSS_IPFS-Secure/ipfs_link"
 )
 
@@ -32,43 +33,65 @@ func main() {
     }
     // Example: Parsing command-line arguments
     // You might want to use a more robust way for parsing arguments (like the `flag` package)
-    if len(os.Args) < 2 {
-        fmt.Println("Usage: main.go [command]")
-        os.Exit(1)
-    }
 
-    command := os.Args[1]
-
-    switch command {
-    case "encrypt":
-        if len(os.Args) != 3 {
-            fmt.Println("Usage: main.go encrypt [filename]")
-            os.Exit(1)
-        }
-        filename := os.Args[2]
-        err := encryptFile(filename)
+    for {
+        choice, err := menu()
         if err != nil {
-            fmt.Printf("Error encrypting file: %s\n", err)
-            os.Exit(1)
+            fmt.Println("Error:", err)
+            continue
         }
 
-    case "decrypt":
-        if len(os.Args) != 3 {
-            fmt.Println("Usage: main.go decrypt [filename]")
-            os.Exit(1)
-        }
-        filename := os.Args[2]
-        err := decryptFile(filename)
-        if err != nil {
-            fmt.Printf("Error decrypting file: %s\n", err)
-            os.Exit(1)
-        }
+        switch choice {
+        case "1":
+            filename, err := generalAskUser("Enter the filename to decrypt ('Save file as'): ")
+            if err != nil {
+                fmt.Println("Error:", err)
+                continue
+            }
+            if err := decryptFile(filename); err != nil {
+                fmt.Println("Error:", err)
+            }
 
-    default:
-        fmt.Println("Invalid command")
-        os.Exit(1)
+        case "2":
+            filename, err := generalAskUser("Enter the filename to encrypt: ")
+            if err != nil {
+                fmt.Println("Error:", err)
+                continue
+            }
+            if err := encryptFile(filename); err != nil {
+                fmt.Println("Error:", err)
+            }
+
+        case "3":
+            err := art_link.PrintFileSlowly("apexflexflexsecure.txt")
+            if err != nil {
+                fmt.Println("Error displaying ASCII art:", err)
+            }
+
+            fmt.Println("Exiting...")
+            os.Exit(0)
+
+        default:
+            fmt.Println("Invalid option, please try again.")
+        }
     }
 }
+
+func menu() (string, error) {
+    err := art_link.PrintFileSlowly("ipfs.txt")
+    if err != nil {
+        fmt.Println("Error displaying ASCII art:", err)
+    }
+
+    fmt.Println("=============================================")
+    fmt.Println("What would you like to do? Select 1, 2, or 3")
+    fmt.Println("1. Decrypt / pull file with CID.")
+    fmt.Println("2. Encrypt / upload sensitive data to IPFS.")
+    fmt.Println("3. Exit.")
+    fmt.Println("=============================================")
+    return generalAskUser("Enter your choice: ")
+}
+
 func downloadKeycardBinary() error {
     url := "https://github.com/status-im/keycard-cli/releases/download/0.7.0/keycard-linux-amd64"
     response, err := http.Get(url)
@@ -130,6 +153,10 @@ func askUserYN(question string) bool {
 }
 
 func encryptFile(filename string) error {
+    // Get the Keycard public key
+    art_link.PrintFileSlowly("scannow.txt")
+    art_link.PrintFileSlowly("flex_implant.txt")
+
     publicKey, err := keycard_link.GetKeycardPublicKey()
     if err != nil {
         return fmt.Errorf("error getting Keycard public key: %w", err)
@@ -139,13 +166,17 @@ func encryptFile(filename string) error {
     if err != nil {
         return fmt.Errorf("error reading passphrase: %w", err)
     }
+    fmt.Print("Generating the seed for KDF ... ")
 
     seedKDF := publicKey + passphrase
     fmt.Println("SeedKDF:", seedKDF)
+    fmt.Print("Generating the symmetric key... \n")
 
     // Derive a key using a KDF (e.g., SHA-256)
     kdfKey := sha256.Sum256([]byte(seedKDF))
     encryptedKey := fmt.Sprintf("%x", kdfKey)
+    art_link.PrintFileSlowly("encrypting.txt")
+
 
     // Encrypt the file using GPG and the derived key
     cmd := exec.Command("gpg", "--symmetric", "--batch", "--passphrase", encryptedKey, filename)
@@ -217,6 +248,9 @@ func decryptFile(filename string) error {
     }
 
     // Get the Keycard public key
+    art_link.PrintFileSlowly("scannow.txt")
+    art_link.PrintFileSlowly("flex_implant.txt")
+
     publicKey, err := keycard_link.GetKeycardPublicKey()
     if err != nil {
         return fmt.Errorf("error getting Keycard public key: %w", err)
@@ -228,9 +262,11 @@ func decryptFile(filename string) error {
         return fmt.Errorf("error reading passphrase: %w", err)
     }
     // Generate the symmetric key
+    fmt.Print("Generating the symmetric key... \n")
     seedKDF := publicKey + passphrase
     kdfKey := sha256.Sum256([]byte(seedKDF))
     decryptedKey := fmt.Sprintf("%x", kdfKey)
+    art_link.PrintFileSlowly("decrypting.txt")
 
     // Decrypt the file using GPG
     decryptedFilePath := "decrypted_" + filename // This is the path where the decrypted file will be saved
