@@ -1,24 +1,26 @@
-# IPFSS / SecureIPFS
+# IPFSS / IPFS-Secure
 
-A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymmetric RSA keypair and GPG. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS.
+### The cloud storage for bio hackers.
+
+A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a temporary symmetric key and GPG. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS.
 
 **Recommended to use keycard, Apex, or Keycard for Multi Factor Authentication (MFA), encrypting and decrypting data. Using IPFS in general.**
 
+This way your keycard and passphrase is used to generate a determinate, temporary, symmetric key that you can encrypt a file with, the key is destroyed but you P71 implant (Apex / FlexSexure) can be used to generate the same key at decryption time. Given the same passhrase.
 
-SecureIPFS is an application and library set that integrates the InterPlanetary File System (IPFS) with robust RSA encryption in Go, providing a secure method to store and retrieve files. It encrypts files before uploading to IPFS and decrypts them using a corresponding key pair.
+SecureIPFS is an application and library set that integrates the InterPlanetary File System (IPFS) with robust RSA or ECC encryption in Go, providing a secure method to store and retrieve files. It encrypts files before uploading to IPFS and decrypts them using a corresponding key. Generated aand destroyed when required. 
 
 ## For developers
 
 1. **IPFS Kubo Implementation.**
-   - I can do this but some help would be appreciated.
-   - Just need to add IPFS Kubo implementation - this is just a front end for IPFS Get and IPFS Add.
+   - Complete
 
 2. **Keycard Implementation.**
-   - This is stage two and if you are a developer wanting to help, make a fork, see /Docs/* and add your software, finish / upload with a pull request.
-   - Ive therorised a way to securely use the keycard for encrypting and decrypting data. Since a EDCSA Signature is unique to the signers private key and the data they are signing. This is all we need.
-   - You just reverse the process, the file is not being signed, the users unique passphrase is. This way the unique EDCSA signature is unique to the user and the application,
-   - This way an attacker cannot decrypt the IPFS data without the keycard, and they cant just scan the keycard, the need to know the passphrase used for that file, and swipe or otherwise steal the keycard.
-   - This is a way of using in vivo crypto coprocessors for secure MFA and file privacy / security.
+   - Complete
+3. **Pinning Implementation. **
+   - In order to prevent the block garbage collection, files have to be pinned, preferrably to a machine you trust, or an external pinning service like filebase.
+   - I am currently working on this process, although currently what has been found is that accounts have to be set up through web2.
+   - Following successful location of an API with full web3 integration, I will adapt the program to utilize the keycard for account generation, payload signing, etc for data hosting. 
 
 
 ## From Dangerous Things with love. 
