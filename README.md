@@ -17,7 +17,7 @@ SecureIPFS is an application and library set that integrates the InterPlanetary 
 
 2. **Keycard Implementation.**
    - Complete
-3. **Pinning Implementation. **
+3. **Pinning Implementation.**
    - In order to prevent the block garbage collection, files have to be pinned, preferrably to a machine you trust, or an external pinning service like filebase.
    - I am currently working on this process, although currently what has been found is that accounts have to be set up through web2.
    - Following successful location of an API with full web3 integration, I will adapt the program to utilize the keycard for account generation, payload signing, etc for data hosting. 
