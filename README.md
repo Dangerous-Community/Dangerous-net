@@ -64,18 +64,11 @@ Before you begin, ensure you have the following installed on your system:
 
 ## Usage
 
-- **Encrypting and Uploading a File**:
-  Encrypt your files with a public key and upload them to IPFS, receiving an IPFS hash in return.
-  ```bash
-  ./SecureIPFS upload --file path/to/file --pubkey path/to/pubkey
-  ```
-
-- **Downloading and Decrypting a File**:
-  Download and decrypt files from IPFS using your private key.
-  ```bash
-  ./SecureIPFS download --hash "ipfs_hash" --privkey path/to/privkey --passphrase "your_passphrase"
-  ```
-
+- **Use App**
+```
+./IPFSS_IPFS-Secure
+```
+  
 ## Contributing
 
 Contributions to SecureIPFS are welcome! Please read our upcoming contributing guidelines for details on how to submit pull requests.
