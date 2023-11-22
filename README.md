@@ -10,15 +10,13 @@ SecureIPFS is an application and library set that integrates the InterPlanetary 
 ## For developers
 
 1. **IPFS Kubo Implementation.**
-   - I can do this but some help would be appreciated.
-   - Just need to add IPFS Kubo implementation - this is just a front end for IPFS Get and IPFS Add.
+   - Complete
 
 2. **Keycard Implementation.**
-   - This is stage two and if you are a developer wanting to help, make a fork, see /Docs/* and add your software, finish / upload with a pull request.
-   - Ive therorised a way to securely use the keycard for encrypting and decrypting data. Since a EDCSA Signature is unique to the signers private key and the data they are signing. This is all we need.
-   - You just reverse the process, the file is not being signed, the users unique passphrase is. This way the unique EDCSA signature is unique to the user and the application,
-   - This way an attacker cannot decrypt the IPFS data without the keycard, and they cant just scan the keycard, the need to know the passphrase used for that file, and swipe or otherwise steal the keycard.
-   - This is a way of using in vivo crypto coprocessors for secure MFA and file privacy / security.
+   - Complete
+  
+3. **Ways to contribute:**
+   - Anything in issues is fair game to fix or submit an enhancement for. 
 
 
 ## From Dangerous Things with love. 
