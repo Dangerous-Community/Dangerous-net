@@ -9,7 +9,10 @@ currently being supported with security updates.
 | ------- | ------------------ |
 | 1.0.5 + | :white_check_mark: |
 | 1.0.4   | :white_check_mark: | 
-| < 1.0   | :x:                |
+| 1.0.3 + | :x:                |
+
+## Summarizations.
+***Pretty much everything previous of the most recent security update.***
 
 ## Reporting a Vulnerability
 
