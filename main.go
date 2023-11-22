@@ -8,6 +8,7 @@ import (
     "bufio"
     "net/http"
     "crypto/sha256"
+    "encoding/hex"
     "strings"
     "IPFSS_IPFS-Secure/keycard_link"
     "IPFSS_IPFS-Secure/art_link"
@@ -167,18 +168,21 @@ func encryptFile(filename string) error {
         return fmt.Errorf("error reading passphrase: %w", err)
     }
     fmt.Print("Generating the seed for KDF ... ")
-
-    seedKDF := publicKey + passphrase
-
+    // Get the public key from the server
+    publicKey, _ := keys.NewECDSAKeyFromPEM(nil)
+    // Convert the public key to a byte slice
+    pubKeyBytes := []byte(publicKey)
+    // Convert the passphrase to a byte slice
+    passphraseBytes := []byte(passphrase)
+    // Concatenate the two byte slices
+    seedKDF := append(pubKeyBytes[:], passphraseBytes...)
     // Derive a key using a KDF (e.g., SHA-256)
-    kdfKey := sha256.Sum256([]byte(seedKDF))
-
-    fmt.Println("Seed KDF: ",kfdKey)
+    kdfKey := sha256.Sum256(seedKDF)
+    fmt.Println("KDF For symmetric keygen: ", kdfKey)
     fmt.Print("Generating the symmetric key... \n")
-
-    encryptedKey := fmt.Sprintf("%x", kdfKey)
+    encryptedKey := hex.EncodeToString(kdfKey[:])
     art_link.PrintFileSlowly("encrypting.txt")
-
+    
 
     // Encrypt the file using GPG and the derived key
     cmd := exec.Command("gpg", "--symmetric", "--batch", "--passphrase", encryptedKey, filename)
