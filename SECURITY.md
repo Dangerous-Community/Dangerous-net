@@ -11,7 +11,7 @@ currently being supported with security updates.
 | 1.0.4   | :white_check_mark: | 
 | 1.0.3 + | :x:                |
 
-## Summarizations.
+## Summarisations.
 ***Pretty much everything previous of the most recent security update.***
 
 ## Reporting a Vulnerability
