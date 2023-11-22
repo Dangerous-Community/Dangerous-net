@@ -86,7 +86,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Completion of initial encryption and sys arg functions / data flow to ipfs get and ipfs add.
 - Usage of JAVA Keycard for signing / backing up private public keys.  
 
-## Function Layout
+## Function Layout (Initial build depreacted, see old tags where this is relevant in /Docs/*)
+
 Key Management Functions
 
 generate_keypair(passphrase): Generates a new RSA key pair (public and private keys) secured by the given passphrase. Stores the key pair securely.
