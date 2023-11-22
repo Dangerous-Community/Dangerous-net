@@ -22,3 +22,6 @@ Either message me in the Discord if you have me directly.
 Add me / find me via my ENS *(satunix.eth)* 
 Or submit an issue into the main public repository as a bug report with the title "SECURITY VULNERABILITY"
 This would be fixed immediately in the next update. 
+
+
+> "Our zero-days last zero days"
