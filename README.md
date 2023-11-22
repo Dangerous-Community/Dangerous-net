@@ -1,26 +1,24 @@
-# IPFSS / IPFS-Secure
+# IPFSS / SecureIPFS
 
-### The cloud storage for bio hackers.
-
-A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a temporary symmetric key and GPG. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS.
+A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymmetric RSA keypair and GPG. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS.
 
 **Recommended to use keycard, Apex, or Keycard for Multi Factor Authentication (MFA), encrypting and decrypting data. Using IPFS in general.**
 
-This way your keycard and passphrase is used to generate a determinate, temporary, symmetric key that you can encrypt a file with, the key is destroyed but you P71 implant (Apex / FlexSexure) can be used to generate the same key at decryption time. Given the same passhrase.
 
-SecureIPFS is an application and library set that integrates the InterPlanetary File System (IPFS) with robust RSA or ECC encryption in Go, providing a secure method to store and retrieve files. It encrypts files before uploading to IPFS and decrypts them using a corresponding key. Generated aand destroyed when required. 
+SecureIPFS is an application and library set that integrates the InterPlanetary File System (IPFS) with robust RSA encryption in Go, providing a secure method to store and retrieve files. It encrypts files before uploading to IPFS and decrypts them using a corresponding key pair.
 
 ## For developers
 
 1. **IPFS Kubo Implementation.**
-   - Complete
+   - I can do this but some help would be appreciated.
+   - Just need to add IPFS Kubo implementation - this is just a front end for IPFS Get and IPFS Add.
 
 2. **Keycard Implementation.**
-   - Complete
-3. **Pinning Implementation.**
-   - In order to prevent the block garbage collection, files have to be pinned, preferrably to a machine you trust, or an external pinning service like filebase.
-   - I am currently working on this process, although currently what has been found is that accounts have to be set up through web2.
-   - Following successful location of an API with full web3 integration, I will adapt the program to utilize the keycard for account generation, payload signing, etc for data hosting. 
+   - This is stage two and if you are a developer wanting to help, make a fork, see /Docs/* and add your software, finish / upload with a pull request.
+   - Ive therorised a way to securely use the keycard for encrypting and decrypting data. Since a EDCSA Signature is unique to the signers private key and the data they are signing. This is all we need.
+   - You just reverse the process, the file is not being signed, the users unique passphrase is. This way the unique EDCSA signature is unique to the user and the application,
+   - This way an attacker cannot decrypt the IPFS data without the keycard, and they cant just scan the keycard, the need to know the passphrase used for that file, and swipe or otherwise steal the keycard.
+   - This is a way of using in vivo crypto coprocessors for secure MFA and file privacy / security.
 
 
 ## From Dangerous Things with love. 
@@ -36,9 +34,8 @@ You may be asking **"but satunix why is this so special?" "These implants can do
    
 ## Key Features
 
-- **Symmetric Encryption**: Utilize RSA encryption to secure your files. Files are encrypted with a generated key, given the unique data from your P71 chip and a passphrase.
-- **Symmetric Encryption 2**: Utilize a Apex or FlexSecure implant with keycard to use Multi Factor Symmetric encryption on your files, supply a passphrase, scan your card, files secured.
-- **Asymmetric Encryption**: Encrypt your files however you want using GPG, I will later be expanding the encryption process into it's own link API, allowing greater flexibility on how your files are encrypted.
+- **Asymmetric Encryption**: Utilize RSA encryption to secure your files. Files are encrypted with a public key and can only be decrypted with the corresponding passphrase protected private key.
+- **Symmetric Encryption**: Utilize a Apex or FlexSecure implant with keycard to use Multi Factor Symmetric encryption on your files, supply a passphrase, scan your card, files secured. 
 - **Decentralized Storage**: Leverage IPFS for secure, encrypted, decentralized, and immutable file storage.
 - **Go Implementation**: Built with Go, taking advantage of its powerful concurrency features and efficient data handling.
 
@@ -54,8 +51,8 @@ Before you begin, ensure you have the following installed on your system:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/ ETC ETC ETC
-   cd IPFSS_IPFS-Secure/
+   git clone https://github.com/yourusername/SecureIPFS.git
+   cd SecureIPFS
    ```
 
 2. **Build the Application**:
@@ -67,10 +64,16 @@ Before you begin, ensure you have the following installed on your system:
 
 ## Usage
 
-- **Run the program, all items in the menu:**
-
+- **Encrypting and Uploading a File**:
+  Encrypt your files with a public key and upload them to IPFS, receiving an IPFS hash in return.
   ```bash
-  ./IPFSS_IPFS-Secure 
+  ./SecureIPFS upload --file path/to/file --pubkey path/to/pubkey
+  ```
+
+- **Downloading and Decrypting a File**:
+  Download and decrypt files from IPFS using your private key.
+  ```bash
+  ./SecureIPFS download --hash "ipfs_hash" --privkey path/to/privkey --passphrase "your_passphrase"
   ```
 
 ## Contributing
