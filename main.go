@@ -168,8 +168,6 @@ func encryptFile(filename string) error {
         return fmt.Errorf("error reading passphrase: %w", err)
     }
     fmt.Print("Generating the seed for KDF ... ")
-    // Get the public key from the server
-    publicKey, _ := keys.NewECDSAKeyFromPEM(nil)
     // Convert the public key to a byte slice
     pubKeyBytes := []byte(publicKey)
     // Convert the passphrase to a byte slice
@@ -178,7 +176,7 @@ func encryptFile(filename string) error {
     seedKDF := append(pubKeyBytes[:], passphraseBytes...)
     // Derive a key using a KDF (e.g., SHA-256)
     kdfKey := sha256.Sum256(seedKDF)
-    fmt.Println("KDF For symmetric keygen: ", kdfKey)
+    fmt.Println("KDF For symmetric keygen: \n", kdfKey)
     fmt.Print("Generating the symmetric key... \n")
     encryptedKey := hex.EncodeToString(kdfKey[:])
     art_link.PrintFileSlowly("encrypting.txt")
@@ -253,7 +251,7 @@ func decryptFile(filename string) error {
         return fmt.Errorf("error retrieving file from IPFS: %w", err)
     }
 
-    // Get the Keycard public key
+     // Get the Keycard public key
     art_link.PrintFileSlowly("scannow.txt")
     art_link.PrintFileSlowly("flex_implant.txt")
 
@@ -262,17 +260,24 @@ func decryptFile(filename string) error {
         return fmt.Errorf("error getting Keycard public key: %w", err)
     }
 
-    // Read the passphrase
     passphrase, err := keycard_link.ReadPassphrase()
     if err != nil {
         return fmt.Errorf("error reading passphrase: %w", err)
     }
-    // Generate the symmetric key
+    fmt.Print("Generating the seed for KDF ... ")
+    // Convert the public key to a byte slice
+    pubKeyBytes := []byte(publicKey)
+    // Convert the passphrase to a byte slice
+    passphraseBytes := []byte(passphrase)
+    // Concatenate the two byte slices
+    seedKDF := append(pubKeyBytes[:], passphraseBytes...)
+    // Derive a key using a KDF (e.g., SHA-256)
+    kdfKey := sha256.Sum256(seedKDF)
+    fmt.Println("KDF For symmetric keygen: \n", kdfKey)
     fmt.Print("Generating the symmetric key... \n")
-    seedKDF := publicKey + passphrase
-    kdfKey := sha256.Sum256([]byte(seedKDF))
-    decryptedKey := fmt.Sprintf("%x", kdfKey)
+    decryptedKey := hex.EncodeToString(kdfKey[:])
     art_link.PrintFileSlowly("decrypting.txt")
+
 
     // Decrypt the file using GPG
     decryptedFilePath := "decrypted_" + filename // This is the path where the decrypted file will be saved
@@ -287,4 +292,3 @@ func decryptFile(filename string) error {
     fmt.Printf("File decrypted successfully: %s\n", decryptedFilePath)
     return nil
 }
-
