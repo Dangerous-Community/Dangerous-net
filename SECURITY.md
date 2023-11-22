@@ -1,6 +1,6 @@
 # Security Policy of SecureIPFS
 
-This document serves as a guide to fellow community members, developers, or users. To provide everyone a clear structure of the standard, at which security is dealt with for this project.
+This document serves as a guide to fellow community members, developers, or users. To provide everyone a clear structure of the standard, as to how security is dealt with for this project.
 
 ## Supported Versions
 
