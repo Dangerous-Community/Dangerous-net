@@ -22,7 +22,7 @@ func PrintFileSlowly(fileName string) error {
         line := scanner.Text()
         for _, char := range line {
             fmt.Print(string(char))
-            time.Sleep(3 * time.Millisecond) // Adjust the delay here to mimic the baud rate
+            time.Sleep(2 * time.Millisecond) // Adjust the delay here to mimic the baud rate
         }
         fmt.Println()
     }
