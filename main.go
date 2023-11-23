@@ -25,6 +25,7 @@ import (
 var englishTxt embed.FS
 
 
+
 func main() {
     if !checkKeycardBinaryExists() {
         fmt.Println("Keycard binary not found. Downloading...")
@@ -78,6 +79,12 @@ func main() {
             fmt.Println("Exiting...")
             os.Exit(0)
 
+
+        case "5":
+            cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Replace with actual CID
+            runIPFSTestWithViu(cid)
+
+
         default:
             fmt.Println("Invalid option, please try again.")
         }
@@ -124,8 +131,92 @@ func menu() (string, error) {
     fmt.Println("2. Decrypt / pull file with CID.")
     fmt.Println("3. Print CID Log to QR code.")
     fmt.Println("4. Exit.")
+    fmt.Println("5. Run IPFS Connection test.")
     fmt.Println("=============================================")
     return generalAskUser("Enter your choice: ")
+}
+
+// runIPFSTestWithViu encapsulates the entire process.
+func runIPFSTestWithViu(cid string) {
+        if err := checkAndInstallViu(); err != nil {
+                fmt.Println("Error installing 'viu':", err)
+                fmt.Println("IPFS Check failed tests... :(")
+                return
+        }
+
+        if err := fetchFromIPFS(cid); err != nil {
+                fmt.Println("Error fetching file from IPFS:", err)
+                fmt.Println("IPFS Check failed tests... :(")
+                return
+        }
+
+        if err := displayImage(cid); err != nil {
+                fmt.Println("Error displaying image:", err)
+                fmt.Println("IPFS Check failed tests... :(")
+                return
+        }
+
+        if err := performBasicIPFSTests(); err != nil {
+                fmt.Println("Error performing basic IPFS tests:", err)
+                fmt.Println("IPFS Check failed tests... :(")
+                return
+        }
+
+        fmt.Println("IPFS tests completed successfully.")
+}
+
+// checkAndInstallViu checks if 'viu' is installed and installs it if not.
+func checkAndInstallViu() error {
+        _, err := exec.LookPath("viu")
+        if err != nil {
+                fmt.Println("Installing 'viu'...")
+                cmd := exec.Command("sudo", "apt-get", "install", "viu", "-y")
+                cmd.Stdout = os.Stdout
+                cmd.Stderr = os.Stderr
+                return cmd.Run()
+        }
+        return nil
+}
+
+// fetchFromIPFS fetches a file from IPFS.
+func fetchFromIPFS(cid string) error {
+        fmt.Println("Fetching from IPFS...")
+        cmd := exec.Command("ipfs", "get", cid)
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        return cmd.Run()
+}
+
+// displayImage displays the image using 'viu'.
+func displayImage(filename string) error {
+        fmt.Println("Displaying image...")
+        cmd := exec.Command("viu", filename)
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        return cmd.Run()
+}
+
+// performBasicIPFSTests runs basic IPFS tests including 'ipfs diag sys' and 'ipfs id'.
+func performBasicIPFSTests() error {
+	fmt.Println("Performing basic IPFS tests...")
+	os.Remove("bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom")
+
+	// Test 'ipfs diag sys'
+	if err := executeIPFSCommand("diag", "sys"); err != nil {
+		return fmt.Errorf("IPFS diag sys test failed: %w", err)
+	}
+
+
+	fmt.Println("All basic IPFS tests passed successfully.")
+	return nil
+}
+
+// executeIPFSCommand executes an IPFS command and returns any errors.
+func executeIPFSCommand(args ...string) error {
+	cmd := exec.Command("ipfs", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func downloadKeycardBinary() error {
