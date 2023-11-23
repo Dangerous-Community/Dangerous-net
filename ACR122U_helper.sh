@@ -10,14 +10,18 @@ install_pcsc() {
     case $distro_choice in
         1)
             echo "Installing pcscd and pcsc-tools using apt..."
-            sudo apt-get install pcscd pcsc-tools
+            sudo apt-get update
+            sudo apt-get install -y pcsc-lite pcsc-tools
+            sudo systemctl enable pcscd
+            sudo systemctl start pcscd
             ;;
         2)
             echo "Installing pcscd and pcsc-tools using pacman..."
-            sudo pacman -Sy pcscd pcsc-tools
+            sudo pacman -Syu --noconfirm ccid libnfc acsccid pcsclite pcsc-tools
+            sudo systemctl enable --now pcscd
             ;;
         3)
-            read -p "Write install command for pcsc-tools or download similar package: " custom_install_cmd
+            read -p "Enter the install command for pcsc-tools or download a similar package: " custom_install_cmd
             eval $custom_install_cmd
             ;;
         *)
@@ -27,32 +31,16 @@ install_pcsc() {
     esac
 }
 
-blacklist_drivers() {
-    echo "Blacklisting conflicting NFC kernel drivers..."
-    echo -e "install nfc /bin/false\ninstall pn533 /bin/false" | sudo tee -a /etc/modprobe.d/blacklist.conf
-}
+echo "Please ensure that your smart card reader is properly connected."
+echo "Running pcsc_scan to detect the reader:"
 
-download_install_drivers() {
-    echo "Downloading ACR122U drivers..."
-    wget http://www.acs.com.hk/download-driver-unified/11929/ACS-Unified-PKG-Lnx-118-P.zip -O acr122u_driver.zip
+# Check if pcsc_scan is available
+if ! command -v pcsc_scan &>/dev/null; then
+    echo "pcsc_scan command not found. Please install pcsc-tools."
+    exit 1
+fi
 
-    echo "Unzipping downloaded drivers..."
-    unzip acr122u_driver.zip -d acr122u_driver
-
-    echo "Installing drivers..."
-    cd acr122u_driver
-    # Placeholder for driver installation command
-    # ./install.sh or other commands as per the driver documentation
-}
+pcsc_scan
 
 # Run functions
 install_pcsc
-blacklist_drivers
-download_install_drivers
-
-echo "Please follow any on-screen instructions to complete the driver installation."
-
-echo "Once the driver is installed, restart your computer."
-
-echo "After restarting, run 'pcsc_scan' to verify the installation. You should see 'ACS ACR122U' listed among the devices."
-

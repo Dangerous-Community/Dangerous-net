@@ -8,13 +8,22 @@ import (
     "bufio"
     "net/http"
     "crypto/sha256"
-    "encoding/hex"
     "strings"
+    "golang.org/x/crypto/pbkdf2"
+    "crypto/rand"
+    "crypto/cipher"
+    "crypto/aes"
+    "embed"
+    "math/big"
     "IPFSS_IPFS-Secure/keycard_link"
     "github.com/mdp/qrterminal/v3"
     "IPFSS_IPFS-Secure/art_link"
     "IPFSS_IPFS-Secure/ipfs_link"
 )
+
+//go:embed english.txt
+var englishTxt embed.FS
+
 
 func main() {
     if !checkKeycardBinaryExists() {
@@ -27,14 +36,11 @@ func main() {
         fmt.Println("Keycard binary downloaded successfully.")
     }
 
-    // Make executable
     err := os.Chmod("./keycard-linux-amd64", 0755)
     if err != nil {
         fmt.Printf("Failed to set execute permission on keycard binary: %s\n", err)
         os.Exit(1)
     }
-    // Example: Parsing command-line arguments
-    // You might want to use a more robust way for parsing arguments (like the `flag` package)
 
     for {
         choice, err := menu()
@@ -61,7 +67,7 @@ func main() {
             }
 
         case "3":
-            qr() // Call the function to print the QR code
+            qr()
 
         case "4":
             err := art_link.PrintFileSlowly("apexflexflexsecure.txt")
@@ -78,9 +84,10 @@ func main() {
     }
 }
 
+
+
 func qr(){
 
-    // Read the file
     data, err := os.ReadFile("log_CID.log")
     if err != nil {
         fmt.Println("Error reading file:", err)
@@ -147,59 +154,8 @@ func checkKeycardBinaryExists() bool {
 }
 
 
-func decryptSingleFile(cid string) error {
-    ipfsFilePath := "retrieved_" + cid // Adjust filename as needed
-
-    // Retrieve the file from IPFS
-    err := ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
-    if err != nil {
-        return fmt.Errorf("error retrieving file from IPFS: %w", err)
-    }
 
 
-     // Get the Keycard public key
-    art_link.PrintFileSlowly("scannow.txt")
-    art_link.PrintFileSlowly("flex_implant.txt")
-
-    publicKey, err := keycard_link.GetKeycardPublicKey()
-    if err != nil {
-        return fmt.Errorf("error getting Keycard public key: %w", err)
-    }
-
-    passphrase, err := keycard_link.ReadPassphrase()
-    if err != nil {
-        return fmt.Errorf("error reading passphrase: %w", err)
-    }
-
-    fmt.Print("Generating the seed for KDF ... ")
-    // Convert the public key to a byte slice
-    pubKeyBytes := []byte(publicKey)
-    // Convert the passphrase to a byte slice
-    passphraseBytes := []byte(passphrase)
-    // Concatenate the two byte slices
-    seedKDF := append(pubKeyBytes[:], passphraseBytes...)
-    // Derive a key using a KDF (e.g., SHA-256)
-    kdfKey := sha256.Sum256(seedKDF)
-    fmt.Println("KDF For symmetric keygen: \n", kdfKey)
-    fmt.Print("Generating the symmetric key... \n")
-    decryptedKey := hex.EncodeToString(kdfKey[:])
-    art_link.PrintFileSlowly("decrypting.txt")
-
-
-    // Decrypt the file using GPG
-    decryptedFilePath := "decrypted_" + cid // This is the path where the decrypted file will be saved
-    cmd := exec.Command("gpg", "--decrypt", "--batch", "--passphrase", decryptedKey, "--output", decryptedFilePath, ipfsFilePath)
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-    err = cmd.Run()
-    if err != nil {
-        return fmt.Errorf("error decrypting file: %w", err)
-    }
-
-    fmt.Printf("File decrypted successfully: %s\n", decryptedFilePath)
-    return nil
-}
-// generalAskUser asks a general question and returns the user's response.
 func generalAskUser(question string) (string, error) {
     fmt.Print(question)
     reader := bufio.NewReader(os.Stdin)
@@ -212,58 +168,8 @@ func generalAskUser(question string) (string, error) {
 
 
 
-func encryptFile(filename string) error {
-    // Get the Keycard public key
-    art_link.PrintFileSlowly("scannow.txt")
-    art_link.PrintFileSlowly("flex_implant.txt")
-
-    publicKey, err := keycard_link.GetKeycardPublicKey()
-    if err != nil {
-        return fmt.Errorf("error getting Keycard public key: %w", err)
-    }
-
-    passphrase, err := keycard_link.ReadPassphrase()
-    if err != nil {
-        return fmt.Errorf("error reading passphrase: %w", err)
-    }
-    fmt.Print("Generating the seed for KDF ... ")
-    // Convert the public key to a byte slice
-    pubKeyBytes := []byte(publicKey)
-    // Convert the passphrase to a byte slice
-    passphraseBytes := []byte(passphrase)
-    // Concatenate the two byte slices
-    seedKDF := append(pubKeyBytes[:], passphraseBytes...)
-    // Derive a key using a KDF (e.g., SHA-256)
-    kdfKey := sha256.Sum256(seedKDF)
-    fmt.Println("KDF For symmetric keygen: \n", kdfKey)
-    fmt.Print("Generating the symmetric key... \n")
-    encryptedKey := hex.EncodeToString(kdfKey[:])
-    art_link.PrintFileSlowly("encrypting.txt")
-    
-
-    // Encrypt the file using GPG and the derived key
-    cmd := exec.Command("gpg", "--symmetric", "--batch", "--passphrase", encryptedKey, filename)
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-    err = cmd.Run()
-    if err != nil {
-        return fmt.Errorf("error encrypting file: %w", err)
-    }
-    fmt.Printf("File encrypted successfully: %s.gpg\n", filename)
-
-    // Use askUserYN to ask if the user wants to upload to IPFS
-    if askUserYN("Do you want to upload the encrypted file to IPFS?") {
-        // Call ipfsUpload function with the encrypted file
-        if err := ipfsUpload(filename + ".gpg"); err != nil {
-            return fmt.Errorf("error uploading file to IPFS: %w", err)
-        }
-    }
-
-    return nil
-}
 
 func saveCID(cid string) error {
-    // Write CID to log_CID.log
     f, err := os.OpenFile("log_CID.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
         return err
@@ -280,13 +186,11 @@ func saveCID(cid string) error {
 
 
 func ipfsUpload(filePath string) error {
-    // Call AddFileToIPFS function
     cid, err := ipfs_link.AddFileToIPFS(filePath)
     if err != nil {
         return err
     }
 
-    // Call saveCID function with the returned CID
     if err := saveCID(cid); err != nil {
         return fmt.Errorf("error saving CID: %w", err)
     }
@@ -317,7 +221,6 @@ func readCIDLog(logFile string) ([]string, error) {
         return nil, err
     }
 
-    // Assuming each line in the log file is a separate CID
     lines := strings.Split(string(data), "\n")
     return lines, nil
 }
@@ -348,16 +251,14 @@ func askUserYN(question string) bool {
 
 
 func decryptFileFromLog() error {
-    // Read CID log
     cids, err := readCIDLog("log_CID.log")
     if err != nil {
         return fmt.Errorf("error reading CID log: %w", err)
     }
 
-    // Loop through each CID in the log and decrypt the associated file
     for _, cid := range cids {
         if cid == "" {
-            continue // Skip empty lines
+            continue
         }
 
         fmt.Printf("Decrypting file for CID: %s\n", cid)
@@ -374,21 +275,18 @@ func decryptFileFromLog() error {
 
 
 func decryptFile(filename string) error {
-    // Ask user for CID
     cid, err := generalAskUser("Enter the CID for the file to decrypt: ")
     if err != nil {
         return fmt.Errorf("error reading CID: %w", err)
     }
 
-    ipfsFilePath := "retrieved_" + filename // Save the file retrieved from IPFS with a prefixed name
+    ipfsFilePath := "retrieved_" + filename
 
-    // Retrieve the file from IPFS
     erro := ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
     if erro != nil {
         return fmt.Errorf("error retrieving file from IPFS: %w", err)
     }
 
-    // Get the Keycard public key
     art_link.PrintFileSlowly("scannow.txt")
     art_link.PrintFileSlowly("flex_implant.txt")
 
@@ -402,31 +300,216 @@ func decryptFile(filename string) error {
         return fmt.Errorf("error reading passphrase: %w", err)
     }
 
-    fmt.Print("Generating the seed for KDF ... ")
-    // Convert the public key to a byte slice
-    pubKeyBytes := []byte(publicKey)
-    // Convert the passphrase to a byte slice
-    passphraseBytes := []byte(passphrase)
-    // Concatenate the two byte slices
-    seedKDF := append(pubKeyBytes[:], passphraseBytes...)
-    // Derive a key using a KDF (e.g., SHA-256)
-    kdfKey := sha256.Sum256(seedKDF)
-    fmt.Println("KDF For symmetric keygen: \n", kdfKey)
-    fmt.Print("Generating the symmetric key... \n")
-    decryptedKey := hex.EncodeToString(kdfKey[:])
-    art_link.PrintFileSlowly("decrypting.txt")
 
 
-    // Decrypt the file using GPG
-    decryptedFilePath := "decrypted_" + cid // Use cid instead of filename
-    cmd := exec.Command("gpg", "--decrypt", "--batch", "--passphrase", decryptedKey, "--output", decryptedFilePath, ipfsFilePath)
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-    err = cmd.Run()
+    saltPhrase, err := generalAskUser("Enter the salt phrase for decryption: ")
+    if err != nil {
+        return fmt.Errorf("error reading salt phrase: %w", err)
+    }
+
+    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
+
+    fmt.Println("Generating the key using PBKDF2 for decryption...")
+    combinedKeyBytes := []byte(combinedKey)
+    saltBytes := []byte(saltPhrase)
+    iterationCount := 1000000
+    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New) // 32 byte AES-256
+
+    encryptedData, err := os.ReadFile(ipfsFilePath)
+    if err != nil {
+        return fmt.Errorf("error reading encrypted file: %w", err)
+    }
+
+    decryptedData, err := DecryptAES(encryptedData, aesKey)
     if err != nil {
         return fmt.Errorf("error decrypting file: %w", err)
     }
 
+    decryptedFilePath := "decrypted_" + cid
+
+    err = os.WriteFile(decryptedFilePath, decryptedData, 0644)
+    if err != nil {
+        return fmt.Errorf("error writing decrypted file: %w", err)
+    }
+
     fmt.Printf("File decrypted successfully: %s\n", decryptedFilePath)
-    return nil // Remove the extra return statement
+    return nil
 }
+
+
+
+
+func decryptSingleFile(cid string) error {
+    ipfsFilePath := "retrieved_" + cid
+
+    err := ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
+    if err != nil {
+        return fmt.Errorf("error retrieving file from IPFS: %w", err)
+    }
+
+
+    art_link.PrintFileSlowly("scannow.txt")
+    art_link.PrintFileSlowly("flex_implant.txt")
+
+    publicKey, err := keycard_link.GetKeycardPublicKey()
+    if err != nil {
+        return fmt.Errorf("error getting Keycard public key: %w", err)
+    }
+
+    passphrase, err := keycard_link.ReadPassphrase()
+    if err != nil {
+        return fmt.Errorf("error reading passphrase: %w", err)
+    }
+
+    saltPhrase, err := generalAskUser("Enter the salt phrase for decryption: ")
+    if err != nil {
+        return fmt.Errorf("error reading salt phrase: %w", err)
+    }
+
+    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
+
+    fmt.Println("Generating the key using PBKDF2 for decryption...")
+    combinedKeyBytes := []byte(combinedKey)
+    saltBytes := []byte(saltPhrase)
+    iterationCount := 1000000
+    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New) // 32 byte AES-256
+
+    encryptedData, err := os.ReadFile(ipfsFilePath)
+    if err != nil {
+        return fmt.Errorf("error reading encrypted file: %w", err)
+    }
+
+    decryptedData, err := DecryptAES(encryptedData, aesKey)
+    if err != nil {
+        fmt.Println("Did you input the correct passphrase and salt phrase?")
+        return fmt.Errorf("error decrypting file: %w", err)
+    }
+
+    decryptedFilePath := "decrypted_" + cid
+    err = os.WriteFile(decryptedFilePath, decryptedData, 0644)
+
+    if err != nil {
+        return fmt.Errorf("error writing decrypted file: %w", err)
+    }
+
+    fmt.Printf("File decrypted successfully: %s\n", decryptedFilePath)
+    return nil
+}
+
+func generateThreeWordPhrase() (string, error) {
+    content, err := englishTxt.ReadFile("english.txt")
+    if err != nil {
+        return "", err
+    }
+
+    dictionary := strings.Split(string(content), "\n")
+    var phrase []string
+    for i := 0; i < 3; i++ {
+        idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(dictionary))))
+        if err != nil {
+            return "", err
+        }
+        phrase = append(phrase, dictionary[idx.Int64()])
+    }
+    return fmt.Sprintf("%s %s %s", phrase[0], phrase[1], phrase[2]), nil
+}
+
+func encryptFile(filename string) error {
+    art_link.PrintFileSlowly("scannow.txt")
+    art_link.PrintFileSlowly("flex_implant.txt")
+
+    publicKey, err := keycard_link.GetKeycardPublicKey()
+    if err != nil {
+        return fmt.Errorf("error getting Keycard public key: %w", err)
+    }
+
+    passphrase, err := keycard_link.ReadPassphrase()
+    if err != nil {
+        return fmt.Errorf("error reading passphrase: %w", err)
+    }
+    fmt.Println("The machine will generate three random words, write these down (Used in conjunciton with your passphrase.)")
+
+    saltPhrase, err := generateThreeWordPhrase()
+    if err != nil {
+        return fmt.Errorf("error generating salt phrase: %w", err)
+    }
+
+    fmt.Println(saltPhrase)
+    fmt.Println("Save these three words and your passphrase to decrypt your files!")
+
+
+    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
+
+    fmt.Println("Generating the key using PBKDF2 for encryption...")
+    combinedKeyBytes := []byte(combinedKey)
+    saltBytes := []byte(saltPhrase)
+    iterationCount := 1000000
+    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New) // 32 byte AES-256
+
+    data, err := os.ReadFile(filename)
+    if err != nil {
+        return fmt.Errorf("error reading file to encrypt: %w", err)
+    }
+
+    encryptedData, err := EncryptAES(data, aesKey)
+    if err != nil {
+        return fmt.Errorf("error encrypting file: %w", err)
+    }
+
+    encryptedFilename := filename + ".aes"
+    err = os.WriteFile(encryptedFilename, encryptedData, 0644)
+    if err != nil {
+        return fmt.Errorf("error writing encrypted file: %w", err)
+    }
+    fmt.Printf("File encrypted successfully: %s\n", encryptedFilename)
+
+    if askUserYN("Do you want to upload the encrypted file to IPFS?") {
+        if err := ipfsUpload(encryptedFilename); err != nil {
+            return fmt.Errorf("error uploading file to IPFS: %w", err)
+        }
+    }
+
+    return nil
+}
+
+func EncryptAES(data []byte, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+
+    gcm, err := cipher.NewGCM(block)
+    if err != nil {
+        return nil, err
+    }
+
+    nonce := make([]byte, gcm.NonceSize())
+    if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+        return nil, err
+    }
+
+    return gcm.Seal(nonce, nonce, data, nil), nil
+}
+
+func DecryptAES(data []byte, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+
+    gcm, err := cipher.NewGCM(block)
+    if err != nil {
+        return nil, err
+    }
+
+    nonceSize := gcm.NonceSize()
+    if len(data) < nonceSize {
+        return nil, err
+    }
+
+    nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+    return gcm.Open(nil, nonce, ciphertext, nil)
+}
+
+
+
