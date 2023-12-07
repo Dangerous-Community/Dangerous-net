@@ -5,6 +5,8 @@ import (
     "bytes"
     "fmt"
     "os"
+    "io"
+    "runtime"
     "os/exec"
     "strings"
     "net/http"
@@ -15,7 +17,7 @@ import (
 
 const gpJarURL = "https://github.com/martinpaljak/GlobalPlatformPro/releases/download/v20.01.23/gp.jar"
 
-func installKeycard() error {
+func InstallKeycard() error {
 	cmd := exec.Command("./keycard-linux-amd64", "install")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -25,13 +27,12 @@ func installKeycard() error {
 	return nil
 }
 
-// GetKeycardPublicKey retrieves the public key from the keycard.
 func GetKeycardPublicKey() (string, error) {
-    // Command to execute
-    fmt.Print("Scan your card now! :) \n")
+    fmt.Println("\033[1;33m==============================\033[0m")
+    fmt.Println("\033[1;32m>\033[0m Scan your card now!")
+    fmt.Println("\033[1;33m==============================\033[0m")
     cmd := exec.Command("./keycard-linux-amd64", "info")
 
-    // Capture the output of the command
     var out bytes.Buffer
     cmd.Stdout = &out
 
@@ -41,12 +42,10 @@ func GetKeycardPublicKey() (string, error) {
         return "", err
     }
 
-    // Process the output to find the public key
     scanner := bufio.NewScanner(&out)
     for scanner.Scan() {
         line := scanner.Text()
         if strings.Contains(line, "PublicKey:") {
-            // Assuming the public key is the last element in the line, separated by spaces
             parts := strings.Fields(line)
             if len(parts) > 1 {
                 return parts[len(parts)-1], nil
@@ -63,7 +62,12 @@ func GetKeycardPublicKey() (string, error) {
 
 // ReadPassphrase prompts the user to enter a passphrase.
 func ReadPassphrase() (string, error) {
-    fmt.Print("Enter a unique passphrase for this particular file: ")
+
+    fmt.Println("\033[1;33m==============================\033[0m")
+    fmt.Println("\033[1;32m>\033[0m Enter a unique passphrase for this particular file: \n")
+    fmt.Println("\033[1;33m==============================\033[0m")
+
+
     reader := bufio.NewReader(os.Stdin)
     passphrase, err := reader.ReadString('\n')
     if err != nil {
@@ -78,7 +82,7 @@ func ReadPassphrase() (string, error) {
 func JavaDependency() {
 	// Check if Java is installed
 	if err := exec.Command("java", "-version").Run(); err == nil {
-		fmt.Println("Java is already installed.")
+		fmt.Println("Java is already installed! :)")
 		return
 	}
 
@@ -132,13 +136,14 @@ func GlobalPlatformDependency() {
 		found = searchFile(path, "gp.jar")
 		if found {
 			fmt.Println("gp.jar found in:", path)
+			fmt.Println("Nice, GlobalPlatformDependency is good :) ")
 			break
 		}
 	}
 
 	// If not found, download the file
 	if !found {
-		fmt.Println("gp.jar not found. Downloading...")
+		fmt.Println("gp.jar not found :/  Downloading...")
 		err := downloadFile("gp.jar", gpJarURL)
 		if err != nil {
 			fmt.Println("Error downloading gp.jar:", err)
