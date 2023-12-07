@@ -25,7 +25,6 @@ import (
 var englishTxt embed.FS
 
 
-
 func main() {
     if !checkKeycardBinaryExists() {
         fmt.Println("Keycard binary not found. Downloading...")
@@ -70,7 +69,26 @@ func main() {
         case "3":
             qr()
 
+
         case "4":
+            fmt.Println("Installing Dependencies...")
+            keycard_link.JavaDependency()
+            keycard_link.GlobalPlatformDependency()
+
+        case "5":
+            fmt.Println("Installing Keycard...")
+            err := keycard_link.InstallKeycard()
+            if err != nil {
+                fmt.Println("Error installing keycard:", err)
+            }
+
+	case "6":
+	    fmt.Println("Running Connection test to the IPFS Network.")
+	    cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Welcome to IPFS CID
+            runIPFSTestWithViu(cid)
+
+
+        case "7":
             err := art_link.PrintFileSlowly("apexflexflexsecure.txt")
             if err != nil {
                 fmt.Println("Error displaying ASCII art:", err)
@@ -79,18 +97,11 @@ func main() {
             fmt.Println("Exiting...")
             os.Exit(0)
 
-
-        case "5":
-            cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Replace with actual CID
-            runIPFSTestWithViu(cid)
-
-
         default:
             fmt.Println("Invalid option, please try again.")
         }
     }
 }
-
 
 
 func qr(){
@@ -119,19 +130,23 @@ func qr(){
 
 
 func menu() (string, error) {
+
     err := art_link.PrintFileSlowly("ipfs.txt")
     if err != nil {
         fmt.Println("Error displaying ASCII art:", err)
     }
+
     fmt.Println("---------------------------------------------")
-    fmt.Println("IPFS-Secure | NFC Interface for IPFS ")
+    fmt.Println("IPFS-Secure | NFC Interface for IPFS")
     fmt.Println("=============================================")
-    fmt.Println("What would you like to do? Select 1, 2, or 3")
-    fmt.Println("1. Encrypt / upload sensitive data to IPFS.")
-    fmt.Println("2. Decrypt / pull file with CID.")
-    fmt.Println("3. Print CID Log to QR code.")
-    fmt.Println("4. Exit.")
-    fmt.Println("5. Run IPFS Connection test.")
+    fmt.Println("   What would you like to do?")
+    fmt.Println("1. Encrypt / upload sensitive data to IPFS")
+    fmt.Println("2. Decrypt / pull file with CID")
+    fmt.Println("3. Print CID Log to QR code")
+    fmt.Println("4. Install Dependencies (Java, GPP)")
+    fmt.Println("5. Install Keycard onto Implant")
+    fmt.Println("6. Run Connection Test to IPFS")
+    fmt.Println("7. Exit the Program")
     fmt.Println("=============================================")
     return generalAskUser("Enter your choice: ")
 }
@@ -173,6 +188,7 @@ func checkAndInstallViu() error {
                 cmd := exec.Command("sudo", "apt-get", "install", "viu", "-y")
                 cmd.Stdout = os.Stdout
                 cmd.Stderr = os.Stderr
+                fmt.Println("\n If this fails, install viu according to your system :) It should be a standard package.. ")
                 return cmd.Run()
         }
         return nil
@@ -211,13 +227,13 @@ func performBasicIPFSTests() error {
 	return nil
 }
 
-// executeIPFSCommand executes an IPFS command and returns any errors.
 func executeIPFSCommand(args ...string) error {
 	cmd := exec.Command("ipfs", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
+
 
 func downloadKeycardBinary() error {
     url := "https://github.com/status-im/keycard-cli/releases/download/0.7.0/keycard-linux-amd64"
