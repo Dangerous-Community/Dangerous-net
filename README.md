@@ -83,11 +83,14 @@ Much credit to the IPFS, Keycard, and AES / GPG developers for inspiration and l
 
 **Early 2024** 
 - Completion / Signifficant progress towards the Dangerous Net (Building scalable decentralised infrastructure for cloud storage) 
-- Usage of JAVA Keycard for signing / backing up private public keys.  
+- Usage of JAVA Keycard or other implants for storing the CID log  
 
 **Late 2024**
 - Reach of critical mass of the Dangerous Net by application users to support itself and be self sufficient.
-- Decentralised network needs to reach a critical *undertermined* size to support itself without daemons running in cloud or in my own servers while also maintaining full file availability. 
+- Decentralised network needs to reach a critical *undertermined* size to support itself without daemons running in cloud or in my own servers while also maintaining full file availability.
+
+**Late 2024 to Early 2025**
+- Android support
 
 ## Donations 
 
