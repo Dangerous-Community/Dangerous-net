@@ -5,7 +5,7 @@ import (
     "fmt"
     "os/exec"
     "strings"
-    "IPFSS_IPFS-Secure/art_link"
+    "Dangerous-net/art_link"
 )
 
 // AddFileToIPFS adds a file to IPFS and returns the CID (Content Identifier)
