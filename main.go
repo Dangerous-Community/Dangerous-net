@@ -51,12 +51,13 @@ func main() {
 
         switch choice {
         case "1":
+	    level := "medium"        // Example encryption level
             filename, err := generalAskUser("Enter the filename to encrypt: ")
             if err != nil {
                 fmt.Println("Error:", err)
                 continue
             }
-            if err := encryptFile(filename); err != nil {
+            if err := encryptFile(filename, level); err != nil {
                 fmt.Println("Error:", err)
             }
 
@@ -280,14 +281,15 @@ func generalAskUser(question string) (string, error) {
 
 
 
-func saveCID(cid string) error {
+func saveCID(cid string, level string) error {
     f, err := os.OpenFile("log_CID.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
         return err
     }
     defer f.Close()
 
-    if _, err := f.WriteString(cid + "\n"); err != nil {
+    logEntry := fmt.Sprintf("%s,%s\n", cid, level) // Format: "cid,level"
+    if _, err := f.WriteString(logEntry); err != nil {
         return err
     }
 
@@ -295,15 +297,14 @@ func saveCID(cid string) error {
 }
 
 
-
-func ipfsUpload(filePath string) error {
+func ipfsUpload(filePath string, level string) error {
     cid, err := ipfs_link.AddFileToIPFS(filePath)
     if err != nil {
         return fmt.Errorf("\033[1;31merror uploading file to IPFS: %w\033[0m", err)
     }
 
-    if err := saveCID(cid); err != nil {
-        return fmt.Errorf("\033[1;31merror saving CID: %w\033[0m", err)
+    if err := saveCID(cid, level); err != nil {
+        return fmt.Errorf("\033[1;31merror saving CID and level: %w\033[0m", err)
     }
 
     fmt.Printf("\033[1;32mFile uploaded to IPFS successfully, CID:\n%s\033[0m\n", cid)
@@ -363,6 +364,15 @@ func askUserYN(question string) bool {
 
 
 
+func getEncryptionLevelForCID(){
+//used only for the CID log
+//read the encryption level associated with that cid
+//if none "Sorry, the level could not be found in the log, which one is it for this file? select manually what it should be
+//  > 1 Easy
+//  > 2 Medium
+//  > 3 Hard
+
+}
 
 func decryptFileFromLog() error {
     cids, err := readCIDLog("log_CID.log")
@@ -375,8 +385,11 @@ func decryptFileFromLog() error {
             continue
         }
 
+
+        level := getEncryptionLevelForCID(cid) // Implement this based on your logging mechanism
+
         fmt.Printf("\033[1;34mDecrypting file for CID: %s\033[0m\n", cid)
-        err := decryptSingleFile(cid)
+        err := decryptSingleFile(cid, level) // Use the obtained level here
         if err != nil {
             fmt.Printf("\033[1;31mError decrypting file for CID %s: %v\033[0m\n", cid, err)
             continue
@@ -387,9 +400,7 @@ func decryptFileFromLog() error {
     return nil
 }
 
-
-
-func decryptSingleFile(cid string) error {
+func decryptSingleFile(cid string, level string) error {
     ipfsFilePath := "retrieved_" + cid
 
     err := ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
@@ -397,31 +408,37 @@ func decryptSingleFile(cid string) error {
         return fmt.Errorf("\033[1;31merror retrieving file from IPFS: %w\033[0m", err)
     }
 
-    art_link.PrintFileSlowly("scannow.txt")
-    art_link.PrintFileSlowly("flex_implant.txt")
+     var combinedKey string
+    var saltPhrase string
+    var passphrase string
 
-    publicKey, err := keycard_link.GetKeycardPublicKey()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+    if level == "medium" || level == "hard" {
+        passphrase, err = generalAskUser("Enter your passphrase for the file: ")
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+        }
     }
 
-    passphrase, err := keycard_link.ReadPassphrase()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
-    }
-
-    saltPhrase, err := generalAskUser("Enter the salt phrase for decryption: ")
+    saltPhrase, err = generalAskUser("Enter the salt phrase used for encryption (Machine generated 3 words): ")
     if err != nil {
         return fmt.Errorf("\033[1;31merror reading salt phrase: %w\033[0m", err)
     }
 
-    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
+    if level == "hard" {
+        publicKey, err := keycard_link.GetKeycardPublicKey()
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        }
+        combinedKey = passphrase + saltPhrase + publicKey
+    } else {
+        combinedKey = passphrase + saltPhrase
+    }
 
     fmt.Println("\033[1;34mGenerating the key using PBKDF2 for decryption...\033[0m")
     combinedKeyBytes := []byte(combinedKey)
     saltBytes := []byte(saltPhrase)
     iterationCount := 1000000
-    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New) // 32 byte AES-256
+    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New)
 
     encryptedData, err := os.ReadFile(ipfsFilePath)
     if err != nil {
@@ -463,28 +480,107 @@ func generateThreeWordPhrase() (string, error) {
     return fmt.Sprintf("%s %s %s", phrase[0], phrase[1], phrase[2]), nil
 }
 
-func encryptFile(filename string) error {
-
-    publicKey, err := keycard_link.GetKeycardPublicKey()
+func decryptFile(filename string) error {
+    cid, err := generalAskUser("Enter the CID for the file to decrypt: ")
     if err != nil {
-        return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        return fmt.Errorf("\033[1;31merror reading CID: %w\033[0m", err)
     }
 
-    passphrase, err := keycard_link.ReadPassphrase()
+    ipfsFilePath := "retrieved_" + filename
+
+    err = ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
     if err != nil {
-        return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+        return fmt.Errorf("\033[1;31merror retrieving file from IPFS: %w\033[0m", err)
     }
-    fmt.Println("\033[1;36mThe machine will generate three random words, write these down (Used in conjunction with your passphrase.)\033[0m")
+
+    level, err := generalAskUser("Enter the encryption level used (easy, medium, hard): ")
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading encryption level: %w\033[0m", err)
+    }
+
+    var combinedKey string
+    var passphrase string
+    var saltPhrase string
+
+    if level == "medium" || level == "hard" {
+        passphrase, err = generalAskUser("Enter your passphrase for the file: ")
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+        }
+    }
+
+    saltPhrase, err = generalAskUser("Enter the salt phrase used for encryption (Machine generated 3 words): ")
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading salt phrase: %w\033[0m", err)
+    }
+
+    if level == "hard" {
+        publicKey, err := keycard_link.GetKeycardPublicKey()
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        }
+        combinedKey = passphrase + saltPhrase + publicKey
+    } else {
+        combinedKey = passphrase + saltPhrase
+    }
+
+    fmt.Println("\033[1;34mGenerating the key using PBKDF2 for decryption...\033[0m")
+    combinedKeyBytes := []byte(combinedKey)
+    saltBytes := []byte(saltPhrase)
+    iterationCount := 1000000
+    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New)
+
+    encryptedData, err := os.ReadFile(ipfsFilePath)
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading encrypted file: %w\033[0m", err)
+    }
+
+    decryptedData, err := DecryptAES(encryptedData, aesKey)
+    if err != nil {
+        fmt.Println("\033[1;33mDid you input the correct passphrase and salt phrase?\033[0m")
+        return fmt.Errorf("\033[1;31merror decrypting file: %w\033[0m", err)
+    }
+
+    decryptedFilePath := "decrypted_" + cid
+    err = os.WriteFile(decryptedFilePath, decryptedData, 0644)
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror writing decrypted file: %w\033[0m", err)
+    }
+
+    fmt.Printf("\033[1;32mFile decrypted successfully: %s\033[0m\n", decryptedFilePath)
+    return nil
+}
+
+
+
+func encryptFile(filename string, level string) error {
+    var passphrase string
+    var err error
+
+    if level == "medium" || level == "hard" {
+        passphrase, err = generalAskUser("Enter a passphrase for this file: ")
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+        }
+    }
 
     saltPhrase, err := generateThreeWordPhrase()
     if err != nil {
         return fmt.Errorf("\033[1;31merror generating salt phrase: %w\033[0m", err)
     }
 
-    fmt.Println("\033[1;32m" + saltPhrase + "\033[0m")
-    fmt.Println("\033[1;33mSave these three words and your passphrase to decrypt your files!\033[0m")
-
-    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
+    var combinedKey string
+    if level == "hard" {
+        publicKey, err := keycard_link.GetKeycardPublicKey()
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        }
+        combinedKey = passphrase + publicKey // Using passphrase and publicKey for hard level
+    } else if level == "medium" {
+        combinedKey = passphrase // Using only passphrase for medium level
+    } else {
+        combinedKey = "" // No passphrase for easy level
+    }
 
     fmt.Println("\033[1;34mGenerating the key using PBKDF2 for encryption...\033[0m")
     combinedKeyBytes := []byte(combinedKey)
@@ -510,70 +606,14 @@ func encryptFile(filename string) error {
     fmt.Printf("\033[1;32mFile encrypted successfully: %s\033[0m\n", encryptedFilename)
 
     if askUserYN("Do you want to upload the encrypted file to IPFS?") {
-        if err := ipfsUpload(encryptedFilename); err != nil {
+        if err := ipfsUpload(encryptedFilename, level); err != nil {
             return fmt.Errorf("\033[1;31merror uploading file to IPFS: %w\033[0m", err)
         }
     }
-
     return nil
 }
 
-func decryptFile(filename string) error {
-    cid, err := generalAskUser("Enter the CID for the file to decrypt: ")
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading CID: %w\033[0m", err)
-    }
 
-    ipfsFilePath := "retrieved_" + filename
-
-    erro := ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
-    if erro != nil {
-        return fmt.Errorf("\033[1;31merror retrieving file from IPFS: %w\033[0m", erro)
-    }
-
-    publicKey, err := keycard_link.GetKeycardPublicKey()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
-    }
-
-    passphrase, err := keycard_link.ReadPassphrase()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
-    }
-
-    saltPhrase, err := generalAskUser("Enter the salt phrase for decryption: ")
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading salt phrase: %w\033[0m", err)
-    }
-
-    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
-
-    fmt.Println("\033[1;34mGenerating the key using PBKDF2 for decryption...\033[0m")
-    combinedKeyBytes := []byte(combinedKey)
-    saltBytes := []byte(saltPhrase)
-    iterationCount := 1000000
-    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New) // 32 byte AES-256
-
-    encryptedData, err := os.ReadFile(ipfsFilePath)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading encrypted file: %w\033[0m", err)
-    }
-
-    decryptedData, err := DecryptAES(encryptedData, aesKey)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror decrypting file: %w\033[0m", err)
-    }
-
-    decryptedFilePath := "decrypted_" + cid
-
-    err = os.WriteFile(decryptedFilePath, decryptedData, 0644)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror writing decrypted file: %w\033[0m", err)
-    }
-
-    fmt.Printf("\033[1;32mFile decrypted successfully: %s\033[0m\n", decryptedFilePath)
-    return nil
-}
 
 func EncryptAES(data []byte, key []byte) ([]byte, error) {
     block, err := aes.NewCipher(key)
