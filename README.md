@@ -1,4 +1,8 @@
-# IPFSS / SecureIPFS
+# SecureIPFS / Dangerous-net
+
+**Rebranding project from IPFSS to Dagnerous-net** 
+- To avoid confusion with the IPFS protocol and to also referance the great support from the Dangerous Things community.
+- Dangerous-net is not affiliated with, a part of, or owned by Dangerous Things, it is a community project. 
 
 A unique IPFS frontend that you can use to push your files through. Encrypt all traffic with a Asymmetric RSA keypair and GPG. Ensure that you can upload private data to IPFS, and only you can receive and view on another machine. The HTTPS of IPFS.
 
@@ -18,6 +22,12 @@ SecureIPFS is an application and library set that integrates the InterPlanetary 
 3. **Ways to contribute:**
    - Anything in issues is fair game to fix or submit an enhancement for. 
 
+4. **IPFS Cluster Implementation**
+    - TO DO!! Implement IPFS clustering so that all users of this application can opt in for the Dangerous Net, the IPFS cluster keeping your encrypted files available and ready to use anytime anywhere.
+  
+5. **GPG Applet Integration**
+    - Build support for the GPG / PGP applets used in keycard and flexSecure implants.
+    - Allow for encryption on chip outside of the application and machine itself, use the in-vivo crypto chips. 
 
 ## From Dangerous Things with love. 
 
@@ -47,33 +57,17 @@ Before you begin, ensure you have the following installed on your system:
 
 ## Installation
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/yourusername/SecureIPFS.git
-   cd SecureIPFS
-   ```
 
-2. **Build the Application**:
-   ```bash
-   go build
-   ```
-3. Use this instead for IPFS add and get for tunneled transfer.
-
-
-## Usage
-
-- **Use App**
-```
-./IPFSS_IPFS-Secure
-```
-  
 ## Contributing
 
-Contributions to SecureIPFS are welcome! Please read our upcoming contributing guidelines for details on how to submit pull requests.
+Contributions to SecureIPFS / Dangerous Net are welcome! Please read our upcoming contributing guidelines for details on how to submit pull requests.
 For now just create a fork and then create a pull request with your changes.
+
+
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT, Apache2 and GPL3 License - see the LICENSE file for details.
+Much credit to the IPFS, Keycard, and AES / GPG developers for inspiration and library support for this project. See acknowledgements bellow. 
 
 ## Acknowledgments
 
@@ -83,50 +77,26 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Roadmap Plan of Development 
 
+**2023**  
 - Completion of initial encryption and sys arg functions / data flow to ipfs get and ipfs add.
+- New UI, possible bubbletea integration 
+
+**Early 2024** 
+- Completion / Signifficant progress towards the Dangerous Net (Building scalable decentralised infrastructure for cloud storage) 
 - Usage of JAVA Keycard for signing / backing up private public keys.  
 
-## Function Layout (Initial build depreacted, see old tags where this is relevant in /Docs/*)
+**Late 2024**
+- Reach of critical mass of the Dangerous Net by application users to support itself and be self sufficient.
+- Decentralised network needs to reach a critical *undertermined* size to support itself without daemons running in cloud or in my own servers while also maintaining full file availability. 
 
-Key Management Functions
+## Donations 
 
-generate_keypair(passphrase): Generates a new RSA key pair (public and private keys) secured by the given passphrase. Stores the key pair securely.
-load_private_key(passphrase): Loads the private key from storage, using the passphrase to decrypt it.
-get_public_key(): Retrieves the public key from the stored key pair.
-File Encryption and Uploading
+**This project is going to undergo a major overall in networking capability**
 
-encrypt_and_sign_file(file_path, private_key): Encrypts the file located at file_path using the private key. Signs the encrypted data to ensure authenticity. Returns the encrypted data.
-upload_to_ipfs(encrypted_data): Uploads the encrypted data to IPFS and returns the IPFS hash (CID - Content Identifier) for the uploaded file.
-File Downloading and Decryption
+[Ethereum Address](https://app.ens.domains/satunix.eth)
 
-download_from_ipfs(ipfs_hash): Downloads the file from IPFS using the given IPFS hash. Returns the downloaded encrypted data.
-decrypt_file(encrypted_data, private_key): Decrypts the encrypted data using the private key. Returns the decrypted file content.
-Utility Functions
+Donations are not needed, though are very welcome to support this project and speed up the expansion of the network, all funds sent will directly go towards hardware for this project to support the Dangerous Network. 
 
-save_file(file_content, file_path): Saves the decrypted file content to the specified path.
-read_file(file_path): Reads the content of the file at the specified path.
-User Interface / Interaction Functions
+![image](https://github.com/SATUNIX/Dangerous-net/assets/111553838/29df7326-7954-4a65-84f0-d191c8ac05e3)
 
-These functions would handle user inputs and actions from the GUI, triggering the appropriate backend functions based on user interaction (e.g., button clicks, form submissions).
-Example Workflow
-Key Generation:
 
-The user generates a new RSA key pair upon first use or loads an existing one.
-Upload Workflow:
-
-User selects a file to upload.
-The file is encrypted and signed using the user's private key.
-The encrypted file is uploaded to IPFS, and the IPFS hash is returned.
-Download Workflow:
-
-User inputs an IPFS hash to download the corresponding file.
-The encrypted file is downloaded from IPFS.
-The user enters the passphrase to unlock the private key.
-The downloaded file is decrypted using the private key and saved locally.
-Security and User Experience Considerations
-Key Security: Store the key pair securely, ideally using an established library for key management.
-Passphrase Handling: Ensure the passphrase is not stored insecurely or transmitted in plain text.
-Error Handling: Implement robust error handling, especially for cryptographic operations and IPFS interactions.
-User Feedback: Provide clear feedback to the user, especially in cases of errors or successful operations.
-Conclusion
-This function layout provides a structured approach to building your application, focusing on key areas like key management, file encryption/decryption, and interaction with IPFS. It is essential to utilize established cryptographic libraries and follow best practices in security and user interface design to ensure the application is both secure and user-friendly.
