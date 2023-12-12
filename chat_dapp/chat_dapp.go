@@ -7,7 +7,6 @@ import (
     "os"
     "os/exec"
     "path/filepath"
-    "bytes"
 )
 
 // chatDappScriptURL is the URL of the chat dapp script.
@@ -80,19 +79,13 @@ func RunBashScript() error {
         return err
     }
 
-    cmd := exec.Command("bash", scriptPath)
-    var stdout, stderr bytes.Buffer
-    cmd.Stdout = &stdout
-    cmd.Stderr = &stderr
-    err = cmd.Run()
+    // Command to open a new terminal window and execute the script
+    cmd := exec.Command("xterm", "-e", "bash", scriptPath)
+    err = cmd.Start()
     if err != nil {
-        fmt.Println("Error executing script:", err)
-        fmt.Println("Script output:", stdout.String())
-        fmt.Println("Script error:", stderr.String())
-        fmt.Println("If the script failed due to missing dependencies, please install 'jq' and 'dialog' using your package manager.")
+        fmt.Println("Error opening new window:", err)
         return err
     }
 
-    fmt.Println("Script executed successfully:", stdout.String())
     return nil
 }
