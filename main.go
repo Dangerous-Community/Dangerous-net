@@ -51,13 +51,12 @@ func main() {
 
         switch choice {
         case "1":
-	    level := "medium"        // Example encryption level
             filename, err := generalAskUser("Enter the filename to encrypt: ")
             if err != nil {
                 fmt.Println("Error:", err)
                 continue
             }
-            if err := encryptFile(filename, level); err != nil {
+            if err := encryptFile(filename); err != nil {
                 fmt.Println("Error:", err)
             }
 
@@ -297,21 +296,6 @@ func saveCID(cid string, level string) error {
 }
 
 
-func ipfsUpload(filePath string, level string) error {
-    cid, err := ipfs_link.AddFileToIPFS(filePath)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror uploading file to IPFS: %w\033[0m", err)
-    }
-
-    if err := saveCID(cid, level); err != nil {
-        return fmt.Errorf("\033[1;31merror saving CID and level: %w\033[0m", err)
-    }
-
-    fmt.Printf("\033[1;32mFile uploaded to IPFS successfully, CID:\n%s\033[0m\n", cid)
-    fmt.Println("\033[1;33mDeleted standard encrypted format.\033[0m")
-    exec.Command("rm", filePath)
-    return nil
-}
 
 func decryptFileOption() error {
     useLog := askUserYN("\033[1;36mDo you want to use the CID log?\033[0m")
@@ -364,14 +348,43 @@ func askUserYN(question string) bool {
 
 
 
-func getEncryptionLevelForCID(){
-//used only for the CID log
-//read the encryption level associated with that cid
-//if none "Sorry, the level could not be found in the log, which one is it for this file? select manually what it should be
-//  > 1 Easy
-//  > 2 Medium
-//  > 3 Hard
+func getEncryptionLevelForCID(cid string) (string, error) {
+    logFile := os.Getenv("HOME") + "/.config/DangerousNet/log_CID.log"
+    data, err := os.ReadFile(logFile)
+    if err != nil {
+        return "", fmt.Errorf("error reading CID log: %w", err)
+    }
 
+    lines := strings.Split(string(data), "\n")
+    for _, line := range lines {
+        parts := strings.Split(line, ",")
+        if len(parts) == 2 && parts[0] == cid {
+            return parts[1], nil
+        }
+    }
+
+    // CID not found in log, ask the user to select the level manually
+    fmt.Println("Sorry, the level could not be found in the log. Which one is it for this file?")
+    fmt.Println("  > 1 Easy")
+    fmt.Println("  > 2 Medium")
+    fmt.Println("  > 3 Hard")
+    reader := bufio.NewReader(os.Stdin)
+    choice, err := reader.ReadString('\n')
+    if err != nil {
+        return "", fmt.Errorf("error reading user input: %w", err)
+    }
+
+    choice = strings.TrimSpace(choice)
+    switch choice {
+    case "1":
+        return "easy", nil
+    case "2":
+        return "medium", nil
+    case "3":
+        return "hard", nil
+    default:
+        return "", fmt.Errorf("invalid selection")
+    }
 }
 
 func decryptFileFromLog() error {
@@ -385,11 +398,14 @@ func decryptFileFromLog() error {
             continue
         }
 
-
-        level := getEncryptionLevelForCID(cid) // Implement this based on your logging mechanism
+        level, err := getEncryptionLevelForCID(cid) // Correctly handle both returned values
+        if err != nil {
+            fmt.Printf("\033[1;31mError retrieving encryption level for CID %s: %v\033[0m\n", cid, err)
+            continue
+        }
 
         fmt.Printf("\033[1;34mDecrypting file for CID: %s\033[0m\n", cid)
-        err := decryptSingleFile(cid, level) // Use the obtained level here
+        err = decryptSingleFile(cid, level)
         if err != nil {
             fmt.Printf("\033[1;31mError decrypting file for CID %s: %v\033[0m\n", cid, err)
             continue
@@ -480,6 +496,30 @@ func generateThreeWordPhrase() (string, error) {
     return fmt.Sprintf("%s %s %s", phrase[0], phrase[1], phrase[2]), nil
 }
 
+
+func ipfsUpload(filePath string, level string) error {
+    cid, err := ipfs_link.AddFileToIPFS(filePath)
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror uploading file to IPFS: %w\033[0m", err)
+    }
+
+    if err := saveCID(cid, level); err != nil {
+        return fmt.Errorf("\033[1;31merror saving CID and level: %w\033[0m", err)
+    }
+
+    fmt.Printf("\033[1;32mFile uploaded to IPFS successfully, CID:\n%s\033[0m\n", cid)
+    fmt.Println("\033[1;33mDeleted standard encrypted format.\033[0m")
+    exec.Command("rm", filePath)
+    return nil
+}
+
+
+func ipfsDownload(){
+//Split, include logic to download a file from IPFS
+//Enter CID, etc...
+
+}
+
 func decryptFile(filename string) error {
     cid, err := generalAskUser("Enter the CID for the file to decrypt: ")
     if err != nil {
@@ -551,9 +591,52 @@ func decryptFile(filename string) error {
     return nil
 }
 
+func setupConfig() error {
+    configDir := os.Getenv("HOME") + "/.config/DangerousNet"
+    configFile := configDir + "/config"
+
+    // Create the DangerousNet directory if it doesn't exist
+    err := os.MkdirAll(configDir, 0755)
+    if err != nil {
+        return fmt.Errorf("error creating config directory: %w", err)
+    }
+
+    // Check if the config file exists
+    if _, err := os.Stat(configFile); os.IsNotExist(err) {
+        // Create a default config file
+        defaultConfig := []byte("encryptionLevel=medium\n")
+        err = os.WriteFile(configFile, defaultConfig, 0644)
+        if err != nil {
+            return fmt.Errorf("error creating default config file: %w", err)
+        }
+    }
+
+    return nil
+}
+
+func readConfig() (string, error) {
+    configFile := os.Getenv("HOME") + "/.config/DangerousNet/config"
+    data, err := os.ReadFile(configFile)
+    if err != nil {
+        return "", fmt.Errorf("error reading config file: %w", err)
+    }
+
+    lines := strings.Split(string(data), "\n")
+    for _, line := range lines {
+        if strings.HasPrefix(line, "encryptionLevel=") {
+            return strings.TrimPrefix(line, "encryptionLevel="), nil
+        }
+    }
+
+    return "medium", nil // Default level if not specified in the config
+}
 
 
-func encryptFile(filename string, level string) error {
+func encryptFile(filename string ) error {
+    level, erro := readConfig()
+    if erro != nil {
+        return fmt.Errorf("error reading encryption level from config: %w", erro)
+    }
     var passphrase string
     var err error
 
