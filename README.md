@@ -57,7 +57,12 @@ Before you begin, ensure you have the following installed on your system:
 - Relevant Go libraries for IPFS and encryption
 
 ## Installation
+1. Run binary
 
+- OR Build 
+```
+go build && ./Dangerous-net
+```  
 
 ## Contributing
 
