@@ -15,10 +15,10 @@ import (
     "crypto/aes"
     "embed"
     "math/big"
-    "IPFSS_IPFS-Secure/keycard_link"
+    "Dangerous-net/keycard_link"
     "github.com/mdp/qrterminal/v3"
-    "IPFSS_IPFS-Secure/art_link"
-    "IPFSS_IPFS-Secure/ipfs_link"
+    "Dangerous-net/art_link"
+    "Dangerous-net/ipfs_link"
 )
 
 //go:embed english.txt
