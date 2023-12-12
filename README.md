@@ -1,4 +1,17 @@
-# Dangerous-net
+# Dangerous-net User interface upgrade Readme
+
+## New branch for the development and exploaration of a new UI. 
+New functions from other branches should be adapted into it ASAP. Once everything is covered we can merge back into main. 
+Basically, the program needs a user interface, we could use some other ones out there though i like bubble tea, downside is, it is a different structure, using MODEL VIEW UPDATE etc instead of a procedual program style as is already written here.
+Though with the MVU style it will greatly improve user experience and feel more like a program to use and hang around in than another linux CLI tool. 
+
+See below for image on bubble tea UI GIF. Also link below for the GitHub of bubble tea UI, 
+
+[Bubble Tea Git Hub](https://github.com/charmbracelet/bubbletea)
+
+
+![image](https://github.com/SATUNIX/Dangerous-net/assets/111553838/7c7b7808-922c-499a-adf1-f219c5cc7f90)
+
 
 **Rebranding project from IPFSS to Dagnerous-net** 
 - To avoid confusion with the IPFS protocol and to also referance the great support from the Dangerous Things community.
