@@ -19,6 +19,7 @@ import (
     "github.com/mdp/qrterminal/v3"
     "Dangerous-net/art_link"
     "Dangerous-net/ipfs_link"
+    "Dangerous-net/chat_dapp"
 )
 
 //go:embed english.txt
@@ -50,82 +51,44 @@ func main() {
         os.Exit(1)
     }
 
-    for {
-        choice, err := menu()
-        if err != nil {
-            fmt.Println("Error:", err)
-            continue
-        }
-
-        switch choice {
-        case "1":
-            filename, err := generalAskUser("Enter the filename to encrypt and upload: ")
-            if err != nil {
-                fmt.Println("Error:", err)
-                continue
-            }
-            if err := encryptAndUploadFile(filename); err != nil {
-                fmt.Println("Error:", err)
-            }
-
-        case "2":
-
-            if err := decryptAndDownloadFile(); err != nil {
-                fmt.Println("Error:", err)
-            }
-
-        case "3":
-	savePath, err := ipfsDownload()
-	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		fmt.Printf("File downloaded successfully to %s\n", savePath)
-	}
-
-    case "4":
-        filePath, err := generalAskUser("Enter the file path to upload to IPFS: ")
-        if err != nil {
-            fmt.Println("Error:", err)
-            continue
-        }
-        // Assuming the level is read from the configuration file
-        level, err := readConfig()
-        if err != nil {
-            fmt.Println("Error:", err)
-            continue
-        }
-        if err := ipfsUpload(filePath, level); err != nil {
-            fmt.Println("Error:", err)
-        }
-
-        case "5":
-            qr()
-
-        case "6":
-            fmt.Println("Installing Dependencies...")
-            keycard_link.JavaDependency()
-            keycard_link.GlobalPlatformDependency()
-
-        case "7":
-            fmt.Println("Installing Keycard...")
-            err := keycard_link.InstallKeycard()
-            if err != nil {
-                fmt.Println("Error installing keycard:", err)
-            }
-
-        case "8":
-            fmt.Println("Running Connection test to the IPFS Network.")
-            cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Welcome to IPFS CID
-            runIPFSTestWithViu(cid)
-
-        case "9":
-            fmt.Println("Exiting...")
-            os.Exit(0)
-
-        default:
-            fmt.Println("Invalid option, please try again.")
-        }
+for {
+    choice, err := menu()
+    if err != nil {
+        fmt.Println("Error:", err)
+        continue
     }
+
+    switch choice {
+    case "1":
+        if handleFileManagement() {
+            continue // If true, continue the main loop, effectively going back to main menu
+	}
+    case "2":
+        if err := chat_dapp.RunBashScript(); err != nil {
+            fmt.Println("Error running chat DApp:", err)
+        }
+    case "3":
+        qr() // Generate QR code
+    case "4":
+        fmt.Println("Installing Dependencies...")
+        keycard_link.JavaDependency()
+        keycard_link.GlobalPlatformDependency()
+    case "5":
+        fmt.Println("Installing Keycard...")
+        if err := keycard_link.InstallKeycard(); err != nil {
+            fmt.Println("Error installing keycard:", err)
+        }
+    case "6":
+        fmt.Println("Running Connection test to the IPFS Network.")
+        runIPFSTestWithViu("bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom") // CID for test
+    case "7":
+        fmt.Println("Exiting...")
+        os.Exit(0)
+    default:
+        fmt.Println("Invalid option, please try again.")
+    }
+}
+
 }
 
 
@@ -170,16 +133,94 @@ func menu() (string, error) {
     // Normal text for the question
     fmt.Println("   What would you like to do?")
 
+    fmt.Println("\033[1;32m>\033[0;32m 1.\033[0m File Management")
+    fmt.Println("\033[1;32m>\033[0;32m 2.\033[0m Run Chat DApp")
+    fmt.Println("\033[1;32m>\033[0;32m 3.\033[0m Print CID Log to QR code")
+    fmt.Println("\033[1;32m>\033[0;32m 4.\033[0m Install Dependencies (Java, GPP)")
+    fmt.Println("\033[1;32m>\033[0;32m 5.\033[0m Install Keycard onto Implant")
+    fmt.Println("\033[1;32m>\033[0;32m 6.\033[0m Run Connection Test to IPFS")
+    fmt.Println("\033[1;32m>\033[0;32m 7.\033[0m Exit the Program")
+    // Yellow lines
+    // Yellow lines
+    fmt.Println("\033[1;33m=============================================\033[0m")
+
+    return generalAskUser("Enter your choice: ")
+}
+
+func handleFileManagement()bool {
+    for {
+        choice, err := fileManagementMenu()
+        if err != nil {
+            fmt.Println("Error:", err)
+            return false
+        }
+        switch choice {
+        case "1":
+            filename, err := generalAskUser("Enter the filename to encrypt and upload: ")
+            if err != nil {
+                fmt.Println("Error:", err)
+                continue
+            }
+            if err := encryptAndUploadFile(filename); err != nil {
+                fmt.Println("Error:", err)
+            }
+
+        case "2":
+            if err := decryptAndDownloadFile(); err != nil {
+                fmt.Println("Error:", err)
+            }
+
+        case "3":
+            savePath, err := ipfsDownload()
+            if err != nil {
+                fmt.Println("Error:", err)
+            } else {
+                fmt.Printf("File downloaded successfully to %s\n", savePath)
+            }
+
+        case "4":
+            filePath, err := generalAskUser("Enter the file path to upload to IPFS: ")
+            if err != nil {
+                fmt.Println("Error:", err)
+                continue
+            }
+            level, err := readConfig()
+            if err != nil {
+                fmt.Println("Error:", err)
+                continue
+            }
+            if err := ipfsUpload(filePath, level); err != nil {
+                fmt.Println("Error:", err)
+            }
+	case "5":
+	     return true
+
+        default:
+            fmt.Println("Invalid option, please try again.")
+        }
+    }
+}
+
+func fileManagementMenu() (string, error) {
+    err := art_link.PrintFileSlowly("ipfs.txt")
+    if err != nil {
+        fmt.Println("Error displaying ASCII art:", err)
+    }
+
+    // Yellow lines
+    fmt.Println("\033[1;33m---------------------------------------------\033[0m")
+    // Bold white title
+    fmt.Println("\033[1;37mDangerous Net | File Management Menu\033[0m")
+    // Yellow lines
+    fmt.Println("\033[1;33m=============================================\033[0m")
+    // Normal text for the question
+    fmt.Println("   What would you like to do?")
+
     fmt.Println("\033[1;32m>\033[0;32m 1.\033[0m Encrypt and Upload")
     fmt.Println("\033[1;32m>\033[0;32m 2.\033[0m Decrypt and Download")
     fmt.Println("\033[1;32m>\033[0;32m 3.\033[0m Just Download from IPFS")
     fmt.Println("\033[1;32m>\033[0;32m 4.\033[0m Just Upload to IPFS")
-    fmt.Println("\033[1;32m>\033[0;32m 5.\033[0m Print CID Log to QR code")
-    fmt.Println("\033[1;32m>\033[0;32m 6.\033[0m Install Dependencies (Java, GPP)")
-    fmt.Println("\033[1;32m>\033[0;32m 7.\033[0m Install Keycard onto Implant")
-    fmt.Println("\033[1;32m>\033[0;32m 8.\033[0m Run Connection Test to IPFS")
-    fmt.Println("\033[1;32m>\033[0;32m 9.\033[0m Exit the Program")
-    // Yellow lines
+    fmt.Println("\033[1;32m>\033[0;32m 5.\033[0m Return to Main Menu")
     // Yellow lines
     fmt.Println("\033[1;33m=============================================\033[0m")
 
