@@ -104,3 +104,9 @@ Donations are not needed, though are very welcome to support this project and sp
 ![image](https://github.com/SATUNIX/Dangerous-net/assets/111553838/29df7326-7954-4a65-84f0-d191c8ac05e3)
 
 
+## Legal 
+
+**Uploaded under GPL3.0, MIT, and Apache 2.0 licenses as per dependency usage**
+
+*copyright C2023 Tritium Cyber Defence All Rights Reserved*
+
