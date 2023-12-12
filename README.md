@@ -1,4 +1,4 @@
-# SecureIPFS / Dangerous-net
+# Dangerous-net
 
 **Rebranding project from IPFSS to Dagnerous-net** 
 - To avoid confusion with the IPFS protocol and to also referance the great support from the Dangerous Things community.
