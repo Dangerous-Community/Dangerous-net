@@ -26,6 +26,14 @@ var englishTxt embed.FS
 
 
 func main() {
+    // Setup configuration file
+    if err := setupConfig(); err != nil {
+        fmt.Printf("Failed to set up config: %s\n", err)
+        os.Exit(1)
+    }
+
+
+
     if !checkKeycardBinaryExists() {
         fmt.Println("Keycard binary not found. Downloading...")
         err := downloadKeycardBinary()
@@ -51,49 +59,66 @@ func main() {
 
         switch choice {
         case "1":
-            filename, err := generalAskUser("Enter the filename to encrypt: ")
+            filename, err := generalAskUser("Enter the filename to encrypt and upload: ")
             if err != nil {
                 fmt.Println("Error:", err)
                 continue
             }
-            if err := encryptFile(filename); err != nil {
+            if err := encryptAndUploadFile(filename); err != nil {
                 fmt.Println("Error:", err)
             }
 
         case "2":
-            err := decryptFileOption()
-            if err != nil {
+
+            if err := decryptAndDownloadFile(); err != nil {
                 fmt.Println("Error:", err)
             }
 
         case "3":
+	savePath, err := ipfsDownload()
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Printf("File downloaded successfully to %s\n", savePath)
+	}
+
+    case "4":
+        filePath, err := generalAskUser("Enter the file path to upload to IPFS: ")
+        if err != nil {
+            fmt.Println("Error:", err)
+            continue
+        }
+        // Assuming the level is read from the configuration file
+        level, err := readConfig()
+        if err != nil {
+            fmt.Println("Error:", err)
+            continue
+        }
+        if err := ipfsUpload(filePath, level); err != nil {
+            fmt.Println("Error:", err)
+        }
+
+        case "5":
             qr()
 
-
-        case "4":
+        case "6":
             fmt.Println("Installing Dependencies...")
             keycard_link.JavaDependency()
             keycard_link.GlobalPlatformDependency()
 
-        case "5":
+        case "7":
             fmt.Println("Installing Keycard...")
             err := keycard_link.InstallKeycard()
             if err != nil {
                 fmt.Println("Error installing keycard:", err)
             }
 
-	case "6":
-	    fmt.Println("Running Connection test to the IPFS Network.")
-	    cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Welcome to IPFS CID
+        case "8":
+            fmt.Println("Running Connection test to the IPFS Network.")
+            cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Welcome to IPFS CID
             runIPFSTestWithViu(cid)
 
-
-        case "7":
-            err := art_link.PrintFileSlowly("apexflexflexsecure.txt")
-            if err != nil {
-                fmt.Println("Error displaying ASCII art:", err)
-            }
-
+        case "9":
             fmt.Println("Exiting...")
             os.Exit(0)
 
@@ -161,20 +186,22 @@ func menu() (string, error) {
     return generalAskUser("Enter your choice: ")
 }
 
-func encryptAndUploadFile(filename string, level string) error {
+func encryptAndUploadFile(filename string) error {
     if err := encryptFile(filename); err != nil {
         return err
     }
     encryptedFilename := filename + ".aes"
-    return ipfsUpload(encryptedFilename, level)
-}
-//
-func decryptAndDownloadFile() error {
-    filePath, err := ipfsDownload()
+    level, err := readConfig()
     if err != nil {
         return err
     }
-    return decryptFile(filePath)
+    return ipfsUpload(encryptedFilename, level)
+}
+
+
+func decryptAndDownloadFile() error {
+//    IPFS DOWNLOAD IS ALREADY CALLED WITHIN DECRYPT FILE FUNCTION! :)
+	return decryptFile()
 }
 
 
@@ -323,11 +350,7 @@ func decryptFileOption() error {
     if useLog {
         return decryptFileFromLog()
     } else {
-        filename, err := generalAskUser("\033[1;36mEnter the filename to decrypt ('Save file as'):\033[0m")
-        if err != nil {
-            return fmt.Errorf("\033[1;31merror reading filename: %w\033[0m", err)
-        }
-        return decryptFile(filename)
+        return decryptFile()
     }
 }
 
@@ -555,7 +578,12 @@ func ipfsDownload() (string, error) {
     return savePath, nil
 }
 
-func decryptFile(filePath string) error {
+func decryptFile() error {
+    filePath, err := generalAskUser("Enter the path of the encrypted file to decrypt: ")
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading file path: %w\033[0m", err)
+    }
+
     level, err := generalAskUser("Enter the encryption level used on the file (easy, medium, hard): ")
     if err != nil {
         return fmt.Errorf("\033[1;31merror reading encryption level: %w\033[0m", err)
@@ -611,6 +639,7 @@ func decryptFile(filePath string) error {
     return nil
 }
 
+
 func setupConfig() error {
     configDir := os.Getenv("HOME") + "/.config/DangerousNet"
     configFile := configDir + "/config"
@@ -624,7 +653,7 @@ func setupConfig() error {
     // Check if the config file exists
     if _, err := os.Stat(configFile); os.IsNotExist(err) {
         // Create a default config file
-        defaultConfig := []byte("encryptionLevel=medium\n")
+        defaultConfig := []byte("encryptionLevel=easy\n")
         err = os.WriteFile(configFile, defaultConfig, 0644)
         if err != nil {
             return fmt.Errorf("error creating default config file: %w", err)
