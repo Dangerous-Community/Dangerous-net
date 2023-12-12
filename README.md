@@ -15,20 +15,20 @@ Dangerous Net is an application and library set that integrates the InterPlaneta
 
 **In order to accelerate development I am accepting bounties for people who can build the below implementations** 
 1. **IPFS Kubo Implementation.** > ~~0ETH~~
-   - ✅Complete
+   - ✅ Complete
 
 2. **Keycard Implementation.** > ~~0ETH~~
-   - ✅Complete
+   - ✅ Complete
   
 3. **Ways to contribute:** 
-   - 🟡:Anything in issues is fair game to fix or submit an enhancement for. 
+   - 🟡 Anything in issues is fair game to fix or submit an enhancement for. 
 
-4. **IPFS Cluster Implementation** **> 0.05 ETH**
-    - ✖️: TO DO!! Implement IPFS clustering so that all users of this application can opt in for the Dangerous Net, the IPFS cluster keeping your encrypted files available and ready to use anytime anywhere.
+4. **IPFS Cluster Implementation** **0.05 ETH**
+    - ✖️ TO DO!! Implement IPFS clustering so that all users of this application can opt in for the Dangerous Net, the IPFS cluster keeping your encrypted files available and ready to use anytime anywhere.
   
-5. **GPG Applet Integration** **> 0.025 ETH**
-    - ✖️:Build support for the GPG / PGP applets used in keycard and flexSecure implants.
-    - ✖️Allow for encryption on chip outside of the application and machine itself, use the in-vivo crypto chips. 
+5. **GPG Applet Integration** **0.025 ETH**
+    - ✖️ Build support for the GPG / PGP applets used in keycard and flexSecure implants.
+    - ✖️ Allow for encryption on chip outside of the application and machine itself, use the in-vivo crypto chips. 
 
 ## From Dangerous Things with love. 
 
