@@ -26,6 +26,14 @@ var englishTxt embed.FS
 
 
 func main() {
+    // Setup configuration file
+    if err := setupConfig(); err != nil {
+        fmt.Printf("Failed to set up config: %s\n", err)
+        os.Exit(1)
+    }
+
+
+
     if !checkKeycardBinaryExists() {
         fmt.Println("Keycard binary not found. Downloading...")
         err := downloadKeycardBinary()
@@ -51,49 +59,66 @@ func main() {
 
         switch choice {
         case "1":
-            filename, err := generalAskUser("Enter the filename to encrypt: ")
+            filename, err := generalAskUser("Enter the filename to encrypt and upload: ")
             if err != nil {
                 fmt.Println("Error:", err)
                 continue
             }
-            if err := encryptFile(filename); err != nil {
+            if err := encryptAndUploadFile(filename); err != nil {
                 fmt.Println("Error:", err)
             }
 
         case "2":
-            err := decryptFileOption()
-            if err != nil {
+
+            if err := decryptAndDownloadFile(); err != nil {
                 fmt.Println("Error:", err)
             }
 
         case "3":
+	savePath, err := ipfsDownload()
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Printf("File downloaded successfully to %s\n", savePath)
+	}
+
+    case "4":
+        filePath, err := generalAskUser("Enter the file path to upload to IPFS: ")
+        if err != nil {
+            fmt.Println("Error:", err)
+            continue
+        }
+        // Assuming the level is read from the configuration file
+        level, err := readConfig()
+        if err != nil {
+            fmt.Println("Error:", err)
+            continue
+        }
+        if err := ipfsUpload(filePath, level); err != nil {
+            fmt.Println("Error:", err)
+        }
+
+        case "5":
             qr()
 
-
-        case "4":
+        case "6":
             fmt.Println("Installing Dependencies...")
             keycard_link.JavaDependency()
             keycard_link.GlobalPlatformDependency()
 
-        case "5":
+        case "7":
             fmt.Println("Installing Keycard...")
             err := keycard_link.InstallKeycard()
             if err != nil {
                 fmt.Println("Error installing keycard:", err)
             }
 
-	case "6":
-	    fmt.Println("Running Connection test to the IPFS Network.")
-	    cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Welcome to IPFS CID
+        case "8":
+            fmt.Println("Running Connection test to the IPFS Network.")
+            cid := "bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom" // Welcome to IPFS CID
             runIPFSTestWithViu(cid)
 
-
-        case "7":
-            err := art_link.PrintFileSlowly("apexflexflexsecure.txt")
-            if err != nil {
-                fmt.Println("Error displaying ASCII art:", err)
-            }
-
+        case "9":
             fmt.Println("Exiting...")
             os.Exit(0)
 
@@ -144,19 +169,41 @@ func menu() (string, error) {
     fmt.Println("\033[1;33m=============================================\033[0m")
     // Normal text for the question
     fmt.Println("   What would you like to do?")
-    // Menu options with green arrow, green number, and normal text
-    fmt.Println("\033[1;32m>\033[0;32m 1.\033[0m Encrypt / upload sensitive data to IPFS")
-    fmt.Println("\033[1;32m>\033[0;32m 2.\033[0m Decrypt / pull file with CID")
-    fmt.Println("\033[1;32m>\033[0;32m 3.\033[0m Print CID Log to QR code")
-    fmt.Println("\033[1;32m>\033[0;32m 4.\033[0m Install Dependencies (Java, GPP)")
-    fmt.Println("\033[1;32m>\033[0;32m 5.\033[0m Install Keycard onto Implant")
-    fmt.Println("\033[1;32m>\033[0;32m 6.\033[0m Run Connection Test to IPFS")
-    fmt.Println("\033[1;32m>\033[0;32m 7.\033[0m Exit the Program")
+
+    fmt.Println("\033[1;32m>\033[0;32m 1.\033[0m Encrypt and Upload")
+    fmt.Println("\033[1;32m>\033[0;32m 2.\033[0m Decrypt and Download")
+    fmt.Println("\033[1;32m>\033[0;32m 3.\033[0m Just Download from IPFS")
+    fmt.Println("\033[1;32m>\033[0;32m 4.\033[0m Just Upload to IPFS")
+    fmt.Println("\033[1;32m>\033[0;32m 5.\033[0m Print CID Log to QR code")
+    fmt.Println("\033[1;32m>\033[0;32m 6.\033[0m Install Dependencies (Java, GPP)")
+    fmt.Println("\033[1;32m>\033[0;32m 7.\033[0m Install Keycard onto Implant")
+    fmt.Println("\033[1;32m>\033[0;32m 8.\033[0m Run Connection Test to IPFS")
+    fmt.Println("\033[1;32m>\033[0;32m 9.\033[0m Exit the Program")
+    // Yellow lines
     // Yellow lines
     fmt.Println("\033[1;33m=============================================\033[0m")
 
     return generalAskUser("Enter your choice: ")
 }
+
+func encryptAndUploadFile(filename string) error {
+    if err := encryptFile(filename); err != nil {
+        return err
+    }
+    encryptedFilename := filename + ".aes"
+    level, err := readConfig()
+    if err != nil {
+        return err
+    }
+    return ipfsUpload(encryptedFilename, level)
+}
+
+
+func decryptAndDownloadFile() error {
+//    IPFS DOWNLOAD IS ALREADY CALLED WITHIN DECRYPT FILE FUNCTION! :)
+	return decryptFile()
+}
+
 
 // runIPFSTestWithViu encapsulates the entire process.
 func runIPFSTestWithViu(cid string) {
@@ -280,14 +327,15 @@ func generalAskUser(question string) (string, error) {
 
 
 
-func saveCID(cid string) error {
+func saveCID(cid string, level string) error {
     f, err := os.OpenFile("log_CID.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
     if err != nil {
         return err
     }
     defer f.Close()
 
-    if _, err := f.WriteString(cid + "\n"); err != nil {
+    logEntry := fmt.Sprintf("%s,%s\n", cid, level) // Format: "cid,level"
+    if _, err := f.WriteString(logEntry); err != nil {
         return err
     }
 
@@ -295,22 +343,6 @@ func saveCID(cid string) error {
 }
 
 
-
-func ipfsUpload(filePath string) error {
-    cid, err := ipfs_link.AddFileToIPFS(filePath)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror uploading file to IPFS: %w\033[0m", err)
-    }
-
-    if err := saveCID(cid); err != nil {
-        return fmt.Errorf("\033[1;31merror saving CID: %w\033[0m", err)
-    }
-
-    fmt.Printf("\033[1;32mFile uploaded to IPFS successfully, CID:\n%s\033[0m\n", cid)
-    fmt.Println("\033[1;33mDeleted standard encrypted format.\033[0m")
-    exec.Command("rm", filePath)
-    return nil
-}
 
 func decryptFileOption() error {
     useLog := askUserYN("\033[1;36mDo you want to use the CID log?\033[0m")
@@ -318,11 +350,7 @@ func decryptFileOption() error {
     if useLog {
         return decryptFileFromLog()
     } else {
-        filename, err := generalAskUser("\033[1;36mEnter the filename to decrypt ('Save file as'):\033[0m")
-        if err != nil {
-            return fmt.Errorf("\033[1;31merror reading filename: %w\033[0m", err)
-        }
-        return decryptFile(filename)
+        return decryptFile()
     }
 }
 
@@ -363,6 +391,44 @@ func askUserYN(question string) bool {
 
 
 
+func getEncryptionLevelForCID(cid string) (string, error) {
+    logFile := os.Getenv("HOME") + "/.config/DangerousNet/log_CID.log"
+    data, err := os.ReadFile(logFile)
+    if err != nil {
+        return "", fmt.Errorf("error reading CID log: %w", err)
+    }
+
+    lines := strings.Split(string(data), "\n")
+    for _, line := range lines {
+        parts := strings.Split(line, ",")
+        if len(parts) == 2 && parts[0] == cid {
+            return parts[1], nil
+        }
+    }
+
+    // CID not found in log, ask the user to select the level manually
+    fmt.Println("Sorry, the level could not be found in the log. Which one is it for this file?")
+    fmt.Println("  > 1 Easy")
+    fmt.Println("  > 2 Medium")
+    fmt.Println("  > 3 Hard")
+    reader := bufio.NewReader(os.Stdin)
+    choice, err := reader.ReadString('\n')
+    if err != nil {
+        return "", fmt.Errorf("error reading user input: %w", err)
+    }
+
+    choice = strings.TrimSpace(choice)
+    switch choice {
+    case "1":
+        return "easy", nil
+    case "2":
+        return "medium", nil
+    case "3":
+        return "hard", nil
+    default:
+        return "", fmt.Errorf("invalid selection")
+    }
+}
 
 func decryptFileFromLog() error {
     cids, err := readCIDLog("log_CID.log")
@@ -375,8 +441,14 @@ func decryptFileFromLog() error {
             continue
         }
 
+        level, err := getEncryptionLevelForCID(cid) // Correctly handle both returned values
+        if err != nil {
+            fmt.Printf("\033[1;31mError retrieving encryption level for CID %s: %v\033[0m\n", cid, err)
+            continue
+        }
+
         fmt.Printf("\033[1;34mDecrypting file for CID: %s\033[0m\n", cid)
-        err := decryptSingleFile(cid)
+        err = decryptSingleFile(cid, level)
         if err != nil {
             fmt.Printf("\033[1;31mError decrypting file for CID %s: %v\033[0m\n", cid, err)
             continue
@@ -387,9 +459,7 @@ func decryptFileFromLog() error {
     return nil
 }
 
-
-
-func decryptSingleFile(cid string) error {
+func decryptSingleFile(cid string, level string) error {
     ipfsFilePath := "retrieved_" + cid
 
     err := ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
@@ -397,31 +467,37 @@ func decryptSingleFile(cid string) error {
         return fmt.Errorf("\033[1;31merror retrieving file from IPFS: %w\033[0m", err)
     }
 
-    art_link.PrintFileSlowly("scannow.txt")
-    art_link.PrintFileSlowly("flex_implant.txt")
+     var combinedKey string
+    var saltPhrase string
+    var passphrase string
 
-    publicKey, err := keycard_link.GetKeycardPublicKey()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+    if level == "medium" || level == "hard" {
+        passphrase, err = generalAskUser("Enter your passphrase for the file: ")
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+        }
     }
 
-    passphrase, err := keycard_link.ReadPassphrase()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
-    }
-
-    saltPhrase, err := generalAskUser("Enter the salt phrase for decryption: ")
+    saltPhrase, err = generalAskUser("Enter the salt phrase used for encryption (Machine generated 3 words): ")
     if err != nil {
         return fmt.Errorf("\033[1;31merror reading salt phrase: %w\033[0m", err)
     }
 
-    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
+    if level == "hard" {
+        publicKey, err := keycard_link.GetKeycardPublicKey()
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        }
+        combinedKey = passphrase + saltPhrase + publicKey
+    } else {
+        combinedKey = passphrase + saltPhrase
+    }
 
     fmt.Println("\033[1;34mGenerating the key using PBKDF2 for decryption...\033[0m")
     combinedKeyBytes := []byte(combinedKey)
     saltBytes := []byte(saltPhrase)
     iterationCount := 1000000
-    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New) // 32 byte AES-256
+    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New)
 
     encryptedData, err := os.ReadFile(ipfsFilePath)
     if err != nil {
@@ -463,28 +539,180 @@ func generateThreeWordPhrase() (string, error) {
     return fmt.Sprintf("%s %s %s", phrase[0], phrase[1], phrase[2]), nil
 }
 
-func encryptFile(filename string) error {
 
-    publicKey, err := keycard_link.GetKeycardPublicKey()
+func ipfsUpload(filePath string, level string) error {
+    cid, err := ipfs_link.AddFileToIPFS(filePath)
     if err != nil {
-        return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        return fmt.Errorf("\033[1;31merror uploading file to IPFS: %w\033[0m", err)
     }
 
-    passphrase, err := keycard_link.ReadPassphrase()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+    if err := saveCID(cid, level); err != nil {
+        return fmt.Errorf("\033[1;31merror saving CID and level: %w\033[0m", err)
     }
-    fmt.Println("\033[1;36mThe machine will generate three random words, write these down (Used in conjunction with your passphrase.)\033[0m")
+
+    fmt.Printf("\033[1;32mFile uploaded to IPFS successfully, CID:\n%s\033[0m\n", cid)
+    fmt.Println("\033[1;33mDeleted standard encrypted format.\033[0m")
+    exec.Command("rm", filePath)
+    return nil
+}
+
+
+
+func ipfsDownload() (string, error) {
+    cid, err := generalAskUser("Enter the CID of the file to download from IPFS: ")
+    if err != nil {
+        return "", fmt.Errorf("\033[1;31merror reading CID: %w\033[0m", err)
+    }
+
+    savePath, err := generalAskUser("Enter the path to save the downloaded file: ")
+    if err != nil {
+        return "", fmt.Errorf("\033[1;31merror reading save path: %w\033[0m", err)
+    }
+
+    err = ipfs_link.GetFileFromIPFS(cid, savePath)
+    if err != nil {
+        return "", fmt.Errorf("\033[1;31merror downloading file from IPFS: %w\033[0m", err)
+    }
+
+    fmt.Printf("\033[1;32mFile downloaded successfully: %s\033[0m\n", savePath)
+    return savePath, nil
+}
+
+func decryptFile() error {
+    filePath, err := generalAskUser("Enter the path of the encrypted file to decrypt: ")
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading file path: %w\033[0m", err)
+    }
+
+    level, err := generalAskUser("Enter the encryption level used on the file (easy, medium, hard): ")
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading encryption level: %w\033[0m", err)
+    }
+
+    var combinedKey, passphrase, saltPhrase string
+    if level == "medium" || level == "hard" {
+        passphrase, err = generalAskUser("Enter your passphrase for the file: ")
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+        }
+    }
+
+    saltPhrase, err = generalAskUser("Enter the salt phrase used for encryption (Machine generated 3 words): ")
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading salt phrase: %w\033[0m", err)
+    }
+
+    if level == "hard" {
+        publicKey, err := keycard_link.GetKeycardPublicKey()
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        }
+        combinedKey = passphrase + saltPhrase + publicKey
+    } else {
+        combinedKey = passphrase + saltPhrase
+    }
+
+    fmt.Println("\033[1;34mGenerating the key using PBKDF2 for decryption...\033[0m")
+    combinedKeyBytes := []byte(combinedKey)
+    saltBytes := []byte(saltPhrase)
+    iterationCount := 1000000
+    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New)
+
+    encryptedData, err := os.ReadFile(filePath)
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror reading encrypted file: %w\033[0m", err)
+    }
+
+    decryptedData, err := DecryptAES(encryptedData, aesKey)
+    if err != nil {
+        fmt.Println("\033[1;33mDid you input the correct passphrase and salt phrase?\033[0m")
+        return fmt.Errorf("\033[1;31merror decrypting file: %w\033[0m", err)
+    }
+
+    decryptedFilePath := "decrypted_" + filePath
+    err = os.WriteFile(decryptedFilePath, decryptedData, 0644)
+    if err != nil {
+        return fmt.Errorf("\033[1;31merror writing decrypted file: %w\033[0m", err)
+    }
+
+    fmt.Printf("\033[1;32mFile decrypted successfully: %s\033[0m\n", decryptedFilePath)
+    return nil
+}
+
+
+func setupConfig() error {
+    configDir := os.Getenv("HOME") + "/.config/DangerousNet"
+    configFile := configDir + "/config"
+
+    // Create the DangerousNet directory if it doesn't exist
+    err := os.MkdirAll(configDir, 0755)
+    if err != nil {
+        return fmt.Errorf("error creating config directory: %w", err)
+    }
+
+    // Check if the config file exists
+    if _, err := os.Stat(configFile); os.IsNotExist(err) {
+        // Create a default config file
+        defaultConfig := []byte("encryptionLevel=easy\n")
+        err = os.WriteFile(configFile, defaultConfig, 0644)
+        if err != nil {
+            return fmt.Errorf("error creating default config file: %w", err)
+        }
+    }
+
+    return nil
+}
+
+func readConfig() (string, error) {
+    configFile := os.Getenv("HOME") + "/.config/DangerousNet/config"
+    data, err := os.ReadFile(configFile)
+    if err != nil {
+        return "", fmt.Errorf("error reading config file: %w", err)
+    }
+
+    lines := strings.Split(string(data), "\n")
+    for _, line := range lines {
+        if strings.HasPrefix(line, "encryptionLevel=") {
+            return strings.TrimPrefix(line, "encryptionLevel="), nil
+        }
+    }
+
+    return "medium", nil // Default level if not specified in the config
+}
+
+
+func encryptFile(filename string ) error {
+    level, erro := readConfig()
+    if erro != nil {
+        return fmt.Errorf("error reading encryption level from config: %w", erro)
+    }
+    var passphrase string
+    var err error
+
+    if level == "medium" || level == "hard" {
+        passphrase, err = generalAskUser("Enter a passphrase for this file: ")
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
+        }
+    }
 
     saltPhrase, err := generateThreeWordPhrase()
     if err != nil {
         return fmt.Errorf("\033[1;31merror generating salt phrase: %w\033[0m", err)
     }
 
-    fmt.Println("\033[1;32m" + saltPhrase + "\033[0m")
-    fmt.Println("\033[1;33mSave these three words and your passphrase to decrypt your files!\033[0m")
-
-    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
+    var combinedKey string
+    if level == "hard" {
+        publicKey, err := keycard_link.GetKeycardPublicKey()
+        if err != nil {
+            return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
+        }
+        combinedKey = passphrase + publicKey // Using passphrase and publicKey for hard level
+    } else if level == "medium" {
+        combinedKey = passphrase // Using only passphrase for medium level
+    } else {
+        combinedKey = "" // No passphrase for easy level
+    }
 
     fmt.Println("\033[1;34mGenerating the key using PBKDF2 for encryption...\033[0m")
     combinedKeyBytes := []byte(combinedKey)
@@ -510,70 +738,14 @@ func encryptFile(filename string) error {
     fmt.Printf("\033[1;32mFile encrypted successfully: %s\033[0m\n", encryptedFilename)
 
     if askUserYN("Do you want to upload the encrypted file to IPFS?") {
-        if err := ipfsUpload(encryptedFilename); err != nil {
+        if err := ipfsUpload(encryptedFilename, level); err != nil {
             return fmt.Errorf("\033[1;31merror uploading file to IPFS: %w\033[0m", err)
         }
     }
-
     return nil
 }
 
-func decryptFile(filename string) error {
-    cid, err := generalAskUser("Enter the CID for the file to decrypt: ")
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading CID: %w\033[0m", err)
-    }
 
-    ipfsFilePath := "retrieved_" + filename
-
-    erro := ipfs_link.GetFileFromIPFS(cid, ipfsFilePath)
-    if erro != nil {
-        return fmt.Errorf("\033[1;31merror retrieving file from IPFS: %w\033[0m", erro)
-    }
-
-    publicKey, err := keycard_link.GetKeycardPublicKey()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror getting Keycard public key: %w\033[0m", err)
-    }
-
-    passphrase, err := keycard_link.ReadPassphrase()
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading passphrase: %w\033[0m", err)
-    }
-
-    saltPhrase, err := generalAskUser("Enter the salt phrase for decryption: ")
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading salt phrase: %w\033[0m", err)
-    }
-
-    combinedKey := fmt.Sprintf("%s%s", publicKey, passphrase)
-
-    fmt.Println("\033[1;34mGenerating the key using PBKDF2 for decryption...\033[0m")
-    combinedKeyBytes := []byte(combinedKey)
-    saltBytes := []byte(saltPhrase)
-    iterationCount := 1000000
-    aesKey := pbkdf2.Key(combinedKeyBytes, saltBytes, iterationCount, 32, sha256.New) // 32 byte AES-256
-
-    encryptedData, err := os.ReadFile(ipfsFilePath)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror reading encrypted file: %w\033[0m", err)
-    }
-
-    decryptedData, err := DecryptAES(encryptedData, aesKey)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror decrypting file: %w\033[0m", err)
-    }
-
-    decryptedFilePath := "decrypted_" + cid
-
-    err = os.WriteFile(decryptedFilePath, decryptedData, 0644)
-    if err != nil {
-        return fmt.Errorf("\033[1;31merror writing decrypted file: %w\033[0m", err)
-    }
-
-    fmt.Printf("\033[1;32mFile decrypted successfully: %s\033[0m\n", decryptedFilePath)
-    return nil
-}
 
 func EncryptAES(data []byte, key []byte) ([]byte, error) {
     block, err := aes.NewCipher(key)
