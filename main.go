@@ -1,26 +1,28 @@
 package main
 
 import (
-    "fmt"
-    "io"
-    "os"
-    "os/exec"
-    "bufio"
-    "net/http"
-    "crypto/sha256"
-    "strings"
-    "golang.org/x/crypto/pbkdf2"
-    "crypto/rand"
-    "crypto/cipher"
-    "crypto/aes"
-    "embed"
-    "math/big"
-    "Dangerous-net/keycard_link"
-    "github.com/mdp/qrterminal/v3"
-    "Dangerous-net/art_link"
-    "Dangerous-net/ipfs_link"
-    "Dangerous-net/cluster_link"
-    "Dangerous-net/chat_dapp"
+	"Dangerous-net/art_link"
+	"Dangerous-net/chat_dapp"
+	"Dangerous-net/cluster_link"
+	"Dangerous-net/ipfs_link"
+	"Dangerous-net/keycard_link"
+	"bufio"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
+	"embed"
+	"fmt"
+	"io"
+	"math/big"
+	"net/http"
+	"os"
+	"os/exec"
+	"strings"
+	"time"
+
+	"github.com/mdp/qrterminal/v3"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 //go:embed english.txt
@@ -82,6 +84,11 @@ for {
     case "6":
         fmt.Println("Running Connection test to the IPFS Network.")
         runIPFSTestWithViu("bafkreie7ohywtosou76tasm7j63yigtzxe7d5zqus4zu3j6oltvgtibeom") // CID for test
+    case "7":
+	    fmt.Println("Testing Daemon and initializing if required.")
+	    time.Sleep(3)
+	    InitializeAndConnectToCluster();
+
     case "0":
         fmt.Println("Exiting...")
         os.Exit(0)
@@ -207,17 +214,17 @@ func handleFileManagement()bool {
 func InitializeAndConnectToCluster() error {
     // Step 1: Initialize IPFS if not already initialized
     if err := cluster_link.InitIPFS(); err != nil {
-        return fmt.Errorf("error initializing IPFS: %w", err)
+        return fmt.Errorf("error initializing IPFS, See documentation for common errors, or setup manually: %w", err)
     }
 
     // Step 2: Retrieve and apply the cluster configuration
     if err := cluster_link.RetrieveAndApplyClusterConfig(); err != nil {
-        return fmt.Errorf("error retrieving and applying cluster config: %w", err)
+        return fmt.Errorf("error retrieving and applying cluster config, See documentation for common errors, or setup manually: %w", err)
     }
 
     // Step 3: Start the IPFS Cluster daemon
     if err := cluster_link.StartClusterDaemon(); err != nil {
-        return fmt.Errorf("error starting IPFS Cluster daemon: %w", err)
+        return fmt.Errorf("error starting IPFS Cluster daemon, See documentation for common errors, or setup manually: %w", err)
     }
 
     fmt.Println("Connected to the IPFS Cluster successfully.")
