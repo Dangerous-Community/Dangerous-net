@@ -1,4 +1,4 @@
-package main
+package cluster_link
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"os"
 	"strings"
+	"encoding/json"
 )
 /*
  *
@@ -20,10 +21,15 @@ import (
  *
  *
  */
+type ClusterConfig struct {
+    Cluster struct {
+        Secret string `json:"secret"`
+        // ... other fields from service.json ...
+    } `json:"cluster"`
+}
+const ServiceJsonCID = "QmcDBkxjNL14fmzv46A9xpcGgA4JLgA9ujgScKfR3AzxAx"
 
 
-// AddFileToCluster uploads a file to the IPFS Cluster.
-// It assumes that the IPFS Cluster peer is already running and configured on the machine.
 func AddFileToCluster(filePath string) (string, error) {
 	cmd := exec.Command("ipfs-cluster-ctl", "add", filePath)
 
@@ -35,11 +41,11 @@ func AddFileToCluster(filePath string) (string, error) {
 	}
 
 	output := out.String()
-	return extractCIDFromClusterOutput(output)
+	return ExtractCIDFromClusterOutput(output)
 }
 
 // extractCIDFromClusterOutput extracts the CID from the output of the ipfs-cluster-ctl add command.
-func extractCIDFromClusterOutput(output string) (string, error) {
+func ExtractCIDFromClusterOutput(output string) (string, error) {
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {
 		if strings.Contains(line, "added") {
@@ -51,24 +57,34 @@ func extractCIDFromClusterOutput(output string) (string, error) {
 	}
 	return "", fmt.Errorf("CID not found in IPFS Cluster add output")
 }
+/*
+ * See the following for remote joining and cluster setup to be built in:
+ * https://ipfscluster.io/documentation/collaborative/setup/
+ * https://ipfscluster.io/documentation/deployment/
+ * https://ipfscluster.io/documentation/deployment/bootstrap/
+ *
+ *
+ */
 
-// InitializeClusterPeer sets up the necessary configuration for a user to join an IPFS Cluster.
-// This function assumes the IPFS and IPFS Cluster binaries are installed.
 func InitializeClusterPeer(clusterSecret string) error {
     // Initialize IPFS if not already initialized
-    if err := initIPFS(); err != nil {
+    if err := InitIPFS(); err != nil {
         return fmt.Errorf("error initializing IPFS: %w", err)
     }
-
-    // Set up IPFS Cluster configuration
-    return setupClusterConfig(clusterSecret)
+    return SetupClusterConfig(clusterSecret)
 }
 
-// initIPFS initializes the local IPFS node.
-func initIPFS() error {
+func InitIPFS() error {
     if _, err := os.Stat("~/.ipfs"); os.IsNotExist(err) {
         cmd := exec.Command("ipfs", "init")
+        var stderr bytes.Buffer
+        cmd.Stderr = &stderr
+
         if err := cmd.Run(); err != nil {
+            if strings.Contains(stderr.String(), "someone else has the lock") {
+                fmt.Println("IPFS daemon is already running.")
+                return nil
+            }
             return fmt.Errorf("failed to initialize IPFS: %w", err)
         }
     }
@@ -76,8 +92,50 @@ func initIPFS() error {
 }
 
 
+func RetrieveAndApplyClusterConfig() error {
+    // Retrieve service.json from IPFS using its CID
+    cmd := exec.Command("ipfs", "get", ServiceJsonCID, "-o", "service.json")
+    if err := cmd.Run(); err != nil {
+        return fmt.Errorf("failed to retrieve cluster configuration from IPFS: %w", err)
+    }
+
+    // Read the configuration file
+    configFileData, err := os.ReadFile("service.json")
+    if err != nil {
+        return fmt.Errorf("failed to read cluster config file: %w", err)
+    }
+
+    // Parse the JSON configuration
+    var config ClusterConfig
+    if err := json.Unmarshal(configFileData, &config); err != nil {
+        return fmt.Errorf("failed to parse cluster config: %w", err)
+    }
+
+    // Use the extracted secret to set up the cluster configuration
+    if err := SetupClusterConfig(config.Cluster.Secret); err != nil {
+        return err
+    }
+
+    return StartClusterDaemon()
+}
+
+func StartClusterDaemon() error {
+    cmd := exec.Command("ipfs-cluster-service", "daemon")
+    var stderr bytes.Buffer
+    cmd.Stderr = &stderr
+
+    if err := cmd.Start(); err != nil {
+        if strings.Contains(stderr.String(), "someone else has the lock") {
+            fmt.Println("IPFS Cluster daemon is already running.")
+            return nil
+        }
+        return fmt.Errorf("failed to start IPFS Cluster daemon: %w", err)
+    }
+    return cmd.Wait()
+}
+
 // setupClusterConfig sets up the IPFS Cluster configuration.
-func setupClusterConfig(clusterSecret string) error {
+func SetupClusterConfig(clusterSecret string) error {
     // Create the IPFS Cluster configuration directory if it doesn't exist
     clusterConfigPath := "~/.ipfs-cluster"
     if _, err := os.Stat(clusterConfigPath); os.IsNotExist(err) {
