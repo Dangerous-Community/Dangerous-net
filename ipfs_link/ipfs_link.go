@@ -6,6 +6,7 @@ import (
     "os/exec"
     "strings"
     "Dangerous-net/art_link"
+    "Dangerous-net/cluster_link"
 )
 
 // AddFileToIPFS adds a file to IPFS and returns the CID (Content Identifier)
@@ -23,6 +24,8 @@ func AddFileToIPFS(filePath string) (string, error) {
         return "", fmt.Errorf("error adding file to IPFS: %w", err)
     }
 
+    done <- true // Signal to stop the loading screen on successful add
+
     output := out.String()
     // Extract CID from the output
     lines := strings.Split(output, "\n")
@@ -30,15 +33,19 @@ func AddFileToIPFS(filePath string) (string, error) {
         if strings.Contains(line, "added") {
             parts := strings.Fields(line)
             if len(parts) >= 2 {
-                done <- true // Signal to stop the loading screen on successful add
-                return parts[1], nil // Assuming the CID is the second part
+                cid := parts[1] // Assuming the CID is the second part
+                // Call the function to add the file to IPFS cluster
+                if _, err := cluster_link.AddFileToCluster(filePath); err != nil {
+                    return "", fmt.Errorf("error pinning file to IPFS Cluster, have you initialised?: %w", err)
+                }
+                return cid, nil
             }
         }
     }
 
-    done <- true // Signal to stop the loading screen if CID is not found
     return "", fmt.Errorf("CID not found in IPFS add output")
 }
+
 // GetFileFromIPFS retrieves a file from IPFS using its CID
 func GetFileFromIPFS(cid, outputPath string) error {
     done := make(chan bool)
