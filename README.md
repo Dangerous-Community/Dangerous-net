@@ -85,11 +85,16 @@ Much credit to the IPFS, Keycard, and AES / GPG developers for inspiration and l
 
 **2023**  
 - Completion of initial encryption and sys arg functions / data flow to ipfs get and ipfs add.
-- New UI, possible bubbletea integration 
+ 
 
 **Early 2024** 
 - Completion / Signifficant progress towards the Dangerous Net (Building scalable decentralised infrastructure for cloud storage) 
 - Usage of JAVA Keycard or other implants for storing the CID log  
+- Encryption on chip 
+- Upload rule set, provide double of uploads, node uploads is under 50% of total size, monetisation of uploads via blockchain signing and CID list smartcontract. 
+- Uptime incentives, airdrops / ETH streaming to follower nodes based on storage provisions. 
+- Downtime disciplinary action, culling of files if base node off-line for 30+ Days
+- Exploration of other additions, social networking, news feed, basic marketplace via ETH/WAN and IPFS integration (required monetisation of storage)
 
 **Late 2024**
 - Reach of critical mass of the Dangerous Net by application users to support itself and be self sufficient.
