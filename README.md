@@ -92,6 +92,8 @@ Much credit to the IPFS, Keycard, and AES / GPG developers for inspiration and l
 - Usage of JAVA Keycard or other implants for storing the CID log  
 - Encryption on chip 
 - Upload rule set, provide double of uploads, node uploads is under 50% of total size, monetisation of uploads via blockchain signing and CID list smartcontract. 
+- Checking function to check if CIDs on cluster are incentivised.
+    - if not paid for > cluster unpin CID
 - Uptime incentives, airdrops / ETH streaming to follower nodes based on storage provisions. 
 - Downtime disciplinary action, culling of files if base node off-line for 30+ Days
 - Exploration of other additions, social networking, news feed, basic marketplace via ETH/WAN and IPFS integration (required monetisation of storage)
